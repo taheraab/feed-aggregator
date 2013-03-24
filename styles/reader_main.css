@@ -1,0 +1,29 @@
+/* class for a collapsible list*/ 
+#subsList {
+	list-style-type:none;
+	padding:0;
+}
+.noListStyle {
+	list-style-type: none;
+	padding: 0 2%;
+}
+.expanded > span:first-of-type {
+	background: url("../resources/ui-icons.png") no-repeat -68px -52px;
+	display:inline-block;
+	width: 9px;
+	height: 9px;
+}
+.expanded > ul:first-of-type {
+	display:block;
+}
+
+.collapsed > span:first-of-type {
+	background: url("../resources/ui-icons.png") no-repeat -36px -52px;
+	display:inline-block;
+	width: 9px;
+	height: 9px;
+	
+}
+.collapsed > ul:first-of-type { 
+	display:none;
+}
