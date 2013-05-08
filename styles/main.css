@@ -1,4 +1,4 @@
-/* class for a collapsible list*/ 
+/* styles for a collapsible list*/ 
 #subsList {
 	list-style-type:none;
 	padding:0;
@@ -26,4 +26,10 @@
 }
 .collapsed > ul:first-of-type { 
 	display:none;
+}
+
+/* document styles */
+
+nav {
+	width = 30%;
 }
