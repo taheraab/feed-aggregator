@@ -9,11 +9,12 @@
 include "classes/UserManager.php";
 // Get login info from session to check if user is already logged in
 session_start();
+$userManager = UserManager::getInstance();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$username = htmlspecialchars($_POST["username"]);
-	if (UserManager::userExists($username)) {
+	if ($userManager->userExists($username)) {
 		$password = htmlspecialchars($_POST["password"]);
-		if(UserManager::authenticate($username, $password)) {
+		if($userManager->authenticate($username, $password)) {
 			// if authentication succeeds, set the current_user in session
 			$_SESSION["currentUser"] = $username;
 		}else {

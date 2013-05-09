@@ -8,8 +8,10 @@
 <?php
 include "classes/UserManager.php";
 session_start();
+$userManager = UserManager::getInstance();
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	if (UserManager::userExists(htmlspecialchars($_POST["username"]))) {
+	if ($userManager->userExists(htmlspecialchars($_POST["username"]))) {
 		echo "<p> ERROR: Username not available, try again </p>";
 		displayRegisterForm();
 	} else {
@@ -17,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		if (isset($_POST["firstname"])) $name = htmlspecialchars($_POST["firstname"]);
  		if (isset($_POST["lastname"])) $name = $name." ".htmlspecialchars($_POST["lastname"]);
 		$user = new User($name, htmlspecialchars($_POST["username"]), htmlspecialchars($_POST["password"]));
-		if (UserManager::createUser($user)) {// if creation was successful
+		if ($userManager->createUser($user)) {// if creation was successful
 			$_SESSION["currentUser"] = $user->getUsername();
 			echo "<button type=\"button\" onclick=\"gotoPage('login.php')\"> Proceed to login </button>";
 		}else {
