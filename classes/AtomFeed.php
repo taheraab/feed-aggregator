@@ -7,7 +7,6 @@ class AtomEntry {
 	public $authors;
 	public $content;
 	public $contentType="text";
-	public $summary="";
 	public $alternateLink="";
 
 }

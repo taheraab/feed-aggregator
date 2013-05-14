@@ -12,22 +12,25 @@ session_start();
 $userManager = UserManager::getInstance();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$username = htmlspecialchars($_POST["username"]);
-	if ($userManager->userExists($username)) {
+	$userId = $userManager->userExists($username);
+	if ($userId) {
 		$password = htmlspecialchars($_POST["password"]);
-		if($userManager->authenticate($username, $password)) {
+		if($userManager->authenticate($userId, $password)) {
 			// if authentication succeeds, set the current_user in session
-			$_SESSION["currentUser"] = $username;
+			$_SESSION["currentUsername"] = $username;
+			$_SESSION["currentUserId"] = $userId;
 		}else {
 			echo "<p> ERROR: Incorrect password, please try again </p>";
 		}	
 	}else echo "<p> ERROR: Username doesn't exist, please try again </p>";
 }
-if (isset($_SESSION["currentUser"])) {
+if (isset($_SESSION["currentUserId"])) {
 	if (isset($_GET["logout"]) && htmlspecialchars($_GET["logout"])) {
-		unset($_SESSION["currentUser"]);
+		unset($_SESSION["currentUsername"]);
+		unset($_SESSION["currentUserId"]);
 		displayLoginForm();
 	} else {
-	echo "<p> Welcome {$_SESSION["currentUser"]}</p>
+	echo "<p> Welcome {$_SESSION["currentUsername"]}</p>
 		  <button type=\"button\" onclick=\"gotoPage('login.php?logout=1')\">Logout</button> ";
 	}
 }else displayLoginForm();

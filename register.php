@@ -19,8 +19,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		if (isset($_POST["firstname"])) $name = htmlspecialchars($_POST["firstname"]);
  		if (isset($_POST["lastname"])) $name = $name." ".htmlspecialchars($_POST["lastname"]);
 		$user = new User($name, htmlspecialchars($_POST["username"]), htmlspecialchars($_POST["password"]));
-		if ($userManager->createUser($user)) {// if creation was successful
-			$_SESSION["currentUser"] = $user->getUsername();
+		$userId = $userManager->createUser($user);
+		if ($userId) {// if creation was successful
+			$_SESSION["currentUsername"] = $user->getUsername();
+			$_SESSION["currentUserId"] = $userId;
 			echo "<button type=\"button\" onclick=\"gotoPage('login.php')\"> Proceed to login </button>";
 		}else {
 			"<p> Error creating new user, try again </p>";

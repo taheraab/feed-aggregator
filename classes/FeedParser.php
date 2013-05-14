@@ -74,11 +74,10 @@ class FeedParser {
 						break;
 					case "content":
 					case "summary":
-						$elmName = $this->xmlReader->name;
 						$contentType = $this->xmlReader->getAttribute("type");
 						if($contentType != null) $entry->contentType = $contentType;
 						$this->xmlReader->read(); //move to the containing text node
-						$entry->$elmName = $this->xmlReader->value;
+						if (!empty($this->xmlReader->value)) $entry->content = $this->xmlReader->value;
 						break;
 					case "link":
 						if ($this->xmlReader->getAttribute("rel") != "alternate") $entry->alternateLink = $this->xmlReader->getAttribute("href");
