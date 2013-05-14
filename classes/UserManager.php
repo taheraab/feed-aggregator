@@ -27,14 +27,14 @@ class UserManager {
 	}
 
 	public static function getInstance() {
-		if (UserManager::$instance == null) UserManager::$instance = new UserManager();
-		return UserManager::$instance;
+		if (self::$instance == null) self::$instance = new UserManager();
+		return self::$instance;
 		
 	}
 	
 	// Checks if the given user exists in the database
 	public function userExists($username) {
-		if ($this->dbh == null) connectToDB();
+		if ($this->dbh == null) $this->connectToDB();
         try {
             $stmt = $this->dbh->query("SELECT username FROM User WHERE username = '".$username."'");
             if (!$stmt) {
@@ -52,7 +52,7 @@ class UserManager {
 
 	// Authenticates an existing user with the given password
 	public function authenticate($username, $password) {
-		if ($this->dbh == null) connectToDB();
+		if ($this->dbh == null) $this->connectToDB();
         try {
             $stmt = $this->dbh->query("SELECT password FROM User WHERE username = '".$username."'");
             if (!$stmt) {
@@ -61,7 +61,7 @@ class UserManager {
             }
 			// will return exactly one row
 			$row = $stmt->fetch(PDO::FETCH_ASSOC);
-			if (crypt($password, UserManager::CRYPT_SALT) == $row["password"]) return true;
+			if (crypt($password, self::CRYPT_SALT) == $row["password"]) return true;
         } catch (PDOException $e) {
             error_log("FeedAggregator::UserManager::authenticate: ".$e->getMessage(),0);
             return false;
@@ -73,7 +73,7 @@ class UserManager {
 	
 	// Add a new user to the database
 	public function createUser(User $user) {
-		if ($this->dbh == null) connectToDB();
+		if ($this->dbh == null) $this->connectToDB();
 		var_dump($user);
 		try {
 			$stmt = $this->dbh->query("INSERT INTO User () VALUES('".$user->getName()."','".$user->getUsername()."','".$user->getPassword()."')");
