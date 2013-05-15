@@ -1,7 +1,8 @@
 <?php
 
 class AtomEntry {
-	public $id;
+	public $id; // Id from DB
+	public $entryId; // Id from XML
 	public $title;
 	public $updated;
 	public $authors;
@@ -12,7 +13,8 @@ class AtomEntry {
 }
 
 class AtomFeed {
-	public $id;
+	public $id; // Id from DB
+	public $feedId; //Id from XML
 	public $title;
 	public $subtitle;
 	public $selfLink;

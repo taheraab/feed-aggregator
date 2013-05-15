@@ -36,20 +36,15 @@ class UserManager {
 	//Returns userId on success, false on failure
 	public function userExists($username) {
 		if ($this->dbh == null) $this->connectToDB();
-        try {
-            $stmt = $this->dbh->query("SELECT id FROM User WHERE username = '".$username."'");
-            if (!$stmt) {
-                error_log("FeedAggregator::UserManager::userExists: ".$this->dbh->errorInfo(), 0);
-                return false;
-            }
-			if ($stmt->rowCount()) {
-				$row = $stmt->fetch(PDO::FETCH_ASSOC);
-				return $row["id"];
-			}
-        } catch (PDOException $e) {
-            error_log("FeedAggregator::UserManager::userExists: ".$e->getMessage(),0);
+        $stmt = $this->dbh->query("SELECT id FROM User WHERE username = '$username'");
+        if (!$stmt) {
+            error_log("FeedAggregator::UserManager::userExists: ".implode("," $this->dbh->errorInfo()), 0);
             return false;
         }
+		if ($stmt->rowCount()) {
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
+			return $row["id"];
+		}
    		
 		return false;
 	}
@@ -57,21 +52,15 @@ class UserManager {
 	// Authenticates an existing user with the given password
 	public function authenticate($userId, $password) {
 		if ($this->dbh == null) $this->connectToDB();
-        try {
-            $stmt = $this->dbh->query("SELECT password FROM User WHERE id = '".$userId."'");
-            if (!$stmt) {
-                error_log("FeedAggregator::UserManager::authenticate: ".$this->dbh->errorInfo(), 0);
-                return false;
-            }
-			// will return exactly one row
-			$row = $stmt->fetch(PDO::FETCH_ASSOC);
-			if (crypt($password, self::CRYPT_SALT) == $row["password"]) return true;
-        } catch (PDOException $e) {
-            error_log("FeedAggregator::UserManager::authenticate: ".$e->getMessage(),0);
+        $stmt = $this->dbh->query("SELECT password FROM User WHERE id = '$userId'");
+        if (!$stmt) {
+            error_log("FeedAggregator::UserManager::authenticate: ".implode(",", $this->dbh->errorInfo()), 0);
             return false;
-        }
-   		
-		return false;
+         }
+		// will return exactly one row
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		if (crypt($password, self::CRYPT_SALT) == $row["password"]) return true;
+		else return false;
 	
 	}
 	
@@ -79,17 +68,11 @@ class UserManager {
 	// Returns the new user Id on success, false on failure
 	public function createUser(User $user) {
 		if ($this->dbh == null) $this->connectToDB();
-		var_dump($user);
-		try {
-			$stmt = $this->dbh->query("INSERT INTO User (name, username, password) VALUES('".$user->getName()."','".$user->getUsername()."','".$user->getPassword()."')");
-		    if (!$stmt) {
-                error_log("FeedAggregator::UserManager::createUser: ".$this->dbh->errorInfo(), 0);
-				return false;
-    		}
-		} catch (PDOException $e) {
-			error_log("FeedAggregator::UserManager::createUser: ".$e->getMessage(),0);
+		$stmt = $this->dbh->query("INSERT INTO User (name, username, password) VALUES('".$user->getName()."','".$user->getUsername()."','".$user->getPassword()."')");
+	    if (!$stmt) {
+               error_log("FeedAggregator::UserManager::createUser: ".implode(",", $this->dbh->errorInfo()), 0);
 			return false;
-		}
+    	}
 		return $this->dbh->lastInsertId();
 	}
 	

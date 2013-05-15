@@ -1,5 +1,6 @@
 <?php
 include "AtomFeed.php";
+include "FeedManager.php";
 
 class FeedParser {
 
@@ -32,6 +33,7 @@ class FeedParser {
 					case "updated":
 					case "subtitle":
 						$elmName = $this->xmlReader->name;
+						if ($elmName == "id") $elmName = "feedId";
 						$this->xmlReader->read(); //move to the containing text node
 						$feed->$elmName = $this->xmlReader->value;
 						break;
@@ -44,7 +46,7 @@ class FeedParser {
 							$this->xmlReader->read();
 							if (($this->xmlReader->nodeType == XMLReader::ELEMENT) && ($this->xmlReader->name == "name")) {
 								$this->xmlReader->read();
-								$feed->authors[] = $this->xmlReader->value;
+								$feed->authors = empty($feed->authors) ? $this->xmlReader->value : $feed->authors.", ".$this->xmlReader->value;
 							}
 						}while ($this->xmlReader->name != "author");
 						break;
@@ -69,6 +71,7 @@ class FeedParser {
 					case "title":
 					case "updated":
 						$elmName = $this->xmlReader->name;
+						if ($elmName == "id") $elmName = "entryId";
 						$this->xmlReader->read(); //move to the containing text node
 						$entry->$elmName = $this->xmlReader->value;
 						break;
@@ -77,7 +80,7 @@ class FeedParser {
 						$contentType = $this->xmlReader->getAttribute("type");
 						if($contentType != null) $entry->contentType = $contentType;
 						$this->xmlReader->read(); //move to the containing text node
-						if (!empty($this->xmlReader->value)) $entry->content = $this->xmlReader->value;
+						if ($this->xmlReader->hasValue) $entry->content = $this->xmlReader->value;
 						break;
 					case "link":
 						if ($this->xmlReader->getAttribute("rel") != "alternate") $entry->alternateLink = $this->xmlReader->getAttribute("href");
@@ -87,7 +90,7 @@ class FeedParser {
 							$this->xmlReader->read();
 							if (($this->xmlReader->nodeType == XMLReader::ELEMENT) && ($this->xmlReader->name == "name")) {
 								$this->xmlReader->read();
-								$entry->authors[] = $this->xmlReader->value;
+								$entry->authors = empty($entry->authors) ? $this->xmlReader->value : $entry->authors.", ".$this->xmlReader->value;
 							}
 						}while ($this->xmlReader->name != "author");
 						break;
@@ -103,6 +106,8 @@ class FeedParser {
 
 $p = new FeedParser();
 //var_dump($p->parseFeed("http://tahera-test.blogspot.com/feeds/posts/default"));
-var_dump($p->parseFeed("/home/tahera/Documents/sample_feed.xml"));
-
+$feed = $p->parseFeed("/home/tahera/Documents/sample_feed.xml");
+//var_dump($feed);
+$feedManager = FeedManager::getInstance();
+$feedManager->createFeed(2, $feed);
 ?>
