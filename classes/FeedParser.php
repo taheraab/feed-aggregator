@@ -25,17 +25,22 @@ class FeedParser {
 
 	private function parseFeedTag() {
 		$feed = new AtomFeed();
+		$feed->entries = array();
 		while ($this->xmlReader->read()) {
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
 				switch ($this->xmlReader->name) {
 					case "id":
 					case "title":
-					case "updated":
 					case "subtitle":
 						$elmName = $this->xmlReader->name;
 						if ($elmName == "id") $elmName = "feedId";
 						$this->xmlReader->read(); //move to the containing text node
 						$feed->$elmName = $this->xmlReader->value;
+						break;
+					case "updated":
+						$this->xmlReader->read();
+						$date = new DateTime($this->xmlReader->value);
+						$feed->updated = $date->getTimestamp();
 						break;
 					case "link":
 						if ($this->xmlReader->getAttribute("rel") == "self") $feed->selfLink = $this->xmlReader->getAttribute("href");
@@ -51,7 +56,7 @@ class FeedParser {
 						}while ($this->xmlReader->name != "author");
 						break;
 					case "entry":
-						$feed->entries[] = $this->parseEntryTag();
+						$feed->entries[] =$this->parseEntryTag();
 						break;
 				}			
 			
@@ -65,15 +70,20 @@ class FeedParser {
 	private function parseEntryTag() {
 		$entry= new AtomEntry();
 		while ($this->xmlReader->read()) {
+			if ($this->xmlReader->name == "entry") break; // reached end of entry
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
 				switch ($this->xmlReader->name) {
 					case "id":
 					case "title":
-					case "updated":
 						$elmName = $this->xmlReader->name;
 						if ($elmName == "id") $elmName = "entryId";
 						$this->xmlReader->read(); //move to the containing text node
 						$entry->$elmName = $this->xmlReader->value;
+						break;
+					case "updated":
+						$this->xmlReader->read();
+						$date = new DateTime($this->xmlReader->value);
+						$entry->updated = $date->getTimestamp();
 						break;
 					case "content":
 					case "summary":
@@ -107,6 +117,7 @@ class FeedParser {
 $p = new FeedParser();
 //var_dump($p->parseFeed("http://tahera-test.blogspot.com/feeds/posts/default"));
 $feed = $p->parseFeed("/home/tahera/Documents/sample_feed.xml");
+//$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
 //var_dump($feed);
 $feedManager = FeedManager::getInstance();
 $feedManager->createFeed(2, $feed);

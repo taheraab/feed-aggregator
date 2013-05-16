@@ -38,7 +38,7 @@ class UserManager {
 		if ($this->dbh == null) $this->connectToDB();
         $stmt = $this->dbh->query("SELECT id FROM User WHERE username = '$username'");
         if (!$stmt) {
-            error_log("FeedAggregator::UserManager::userExists: ".implode("," $this->dbh->errorInfo()), 0);
+            error_log("FeedAggregator::UserManager::userExists: ".implode(",", $this->dbh->errorInfo()), 0);
             return false;
         }
 		if ($stmt->rowCount()) {
@@ -69,7 +69,7 @@ class UserManager {
 	public function createUser(User $user) {
 		if ($this->dbh == null) $this->connectToDB();
 		$stmt = $this->dbh->query("INSERT INTO User (name, username, password) VALUES('".$user->getName()."','".$user->getUsername()."','".$user->getPassword()."')");
-	    if (!$stmt) {
+		if (!$stmt) {
                error_log("FeedAggregator::UserManager::createUser: ".implode(",", $this->dbh->errorInfo()), 0);
 			return false;
     	}
