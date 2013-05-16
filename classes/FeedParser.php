@@ -56,7 +56,8 @@ class FeedParser {
 						}while ($this->xmlReader->name != "author");
 						break;
 					case "entry":
-						$feed->entries[] =$this->parseEntryTag();
+						$entry = $this->parseEntryTag();
+						if($entry) $feed->entries[] = $entry;
 						break;
 				}			
 			
@@ -69,6 +70,7 @@ class FeedParser {
 	
 	private function parseEntryTag() {
 		$entry= new AtomEntry();
+		$skipEntry = false;
 		while ($this->xmlReader->read()) {
 			if ($this->xmlReader->name == "entry") break; // reached end of entry
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
@@ -88,7 +90,11 @@ class FeedParser {
 					case "content":
 					case "summary":
 						$contentType = $this->xmlReader->getAttribute("type");
-						if($contentType != null) $entry->contentType = $contentType;
+						if($contentType != null) {
+							 $entry->contentType = $contentType;
+						// if contentType is not text, html or xhtml skip this entry (Not supported)
+							if (($contentType != "text") && ($contentType != "html") && ($contentType != "xhtml")) $skipEntry = true;
+						}
 						$this->xmlReader->read(); //move to the containing text node
 						if ($this->xmlReader->hasValue) $entry->content = $this->xmlReader->value;
 						break;
@@ -108,7 +114,7 @@ class FeedParser {
 			
 			}
 		}	
-		return $entry;
+		return ($skipEntry)? false : $entry;
 	}
 
 	
@@ -118,7 +124,7 @@ $p = new FeedParser();
 //var_dump($p->parseFeed("http://tahera-test.blogspot.com/feeds/posts/default"));
 $feed = $p->parseFeed("/home/tahera/Documents/sample_feed.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
-//var_dump($feed);
-$feedManager = FeedManager::getInstance();
-$feedManager->createFeed(2, $feed);
+var_dump($feed);
+//$feedManager = FeedManager::getInstance();
+//$feedManager->createFeed(2, $feed);
 ?>
