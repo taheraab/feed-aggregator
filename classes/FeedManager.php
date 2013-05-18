@@ -132,7 +132,7 @@ class FeedManager {
 		// insert feed record	
 		$query ="INSERT INTO Feed (feedId, title, subtitle, selfLink, updated, authors, alternateLink) VALUES ('$feed->feedId', '".addslashes($feed->title)."', '".addslashes($feed->subtitle)."', '$feed->selfLink', '$feed->updated', '$feed->authors', '$feed->alternateLink')";
 	   	$stmt = $this->execQuery($query, "insertFeed: Inserting a new feed record", true);
-		if (!stmt) return false;
+		if (!$stmt) return false;
 		// Insert new record in UserFeedRel
    		$feedId = $this->dbh->lastInsertId();
 		if(!$this->insertUserFeedRelRec($userId, $feedId)) return false;	
@@ -202,7 +202,7 @@ class FeedManager {
 		$query = rtrim($query, ",");
 		$stmt = $this->execQuery($query, "insertEntryRecs: Inserting new entry records", true);
 		if (!$stmt) return false;
-		$lastEntryId = $this->dbh->lastInsertedId();
+		$lastEntryId = $this->dbh->lastInsertId();
 		if(!$this->insertUserEntryRelRecs($userId, $feedId)) return false;	
 		return $lastEntryId;	
 
