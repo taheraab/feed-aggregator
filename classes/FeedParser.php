@@ -167,7 +167,6 @@ class FeedParser {
 						break;
 					case "item": //maps to entry
 						$entry = $this->parseItemTag();
-						if(isset($lastBuildDate)) $entry->updated = $lastBuildDate;
 						$feed->entries[] = $entry;
 						break;
 				}			
@@ -175,22 +174,24 @@ class FeedParser {
 			}
 		}
 		// Rss items have many optional elements, let's make good guesses for our required updated property 
-		if (!$feed->updated) {
 			$currentDate = new DateTime();
 			//if we're here then entry updated is not set
-			foreach($feed->entries as $entry) {
-				$i = 1;
-				if ($entry->published) $entry->updated = $entry->published;
+		foreach($feed->entries as $entry) {
+			$i = 1;
+			if (!$entry->updated) { // if pubDate is absent , then use lastBuildDate else currentdate
+				if (isset($lastBuildDate)) $entry->updated = $lastBuildDate;
 				else $entry->updated = $currentDate->getTimestamp();
-				// If id is empty let's make good guesses for our required id property
-				if (empty($entry->id)) {
-					// Use link as id, else pubDate , else use an index
-					if (!empty($entry->alternateLink)) $entry->entryId = $entry->alternateLink;
-					else if($entry->published) $entry->entryId = $entry->published;
-					else $entry->id = $i++;
-				}	
-	
 			}
+			// If id is empty let's make good guesses for our required id property
+			if (empty($entry->id)) {
+				// Use link as id, else pubDate , else use an index
+				if (!empty($entry->alternateLink)) $entry->entryId = $entry->alternateLink;
+				else if($entry->published) $entry->entryId = $entry->published;
+				else $entry->id = $i++;
+			}	
+		}
+	
+		if(!$feed->updated) {
 			// if lastBuildDate was not present, then use pubDate, else use first entry's updated value
 			if (isset($pubDate)) $feed->updated = $pubDate;
 			else $feed->updated = $feed->entries[0]->updated;
@@ -216,7 +217,7 @@ class FeedParser {
 					case "pubDate": //maps to published
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$entry->published = $date->getTimestamp();
+						$entry->updated= $entry->published = $date->getTimestamp();
 						break;
 					case "description": //maps to content
 						$this->xmlReader->read();
@@ -245,13 +246,14 @@ class FeedParser {
 	
 }
 
-$p = new FeedParser();
-//var_dump($p->parseFeed("http://tahera-test.blogspot.com/feeds/posts/default"));
+//$p = new FeedParser();
+//$feed = $p->parseFeed("http://www.aayisrecipes.com/feed/");
 
 //$feed = $p->parseFeed("http://feeds.feedburner.com/tedblog");
-$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
+//$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
-var_dump($feed);
-//$feedManager = FeedManager::getInstance();
-//$feedManager->createFeed(1, $feed);
+//var_dump($feed);
+$feedManager = FeedManager::getInstance();
+var_dump($feedManager->getFeeds(1));
+var_dump($feedManager->getEntries(1, 1));
 ?>
