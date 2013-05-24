@@ -1,6 +1,8 @@
+var myFeeds=[];
 // Create the navigation menu
 $(document).ready(function(){
 	createCList($("#subsList"));
+	loadFeeds();
 });
 
 //functions to create a collapsible list
@@ -21,4 +23,16 @@ function toggleState(elm){
 		$(elm).parent().removeClass("expanded");
 		$(elm).parent().addClass("collapsed");
 	}
+}
+
+// Loads feeds from server and populates the navigation list
+function loadFeeds() {
+	$.getJSON("manage_feeds.php?getFeeds", function(feeds) {
+		myFeeds = feeds;
+		for (feed in myFeeds) {
+
+		}
+
+	});
+
 }

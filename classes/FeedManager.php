@@ -1,6 +1,7 @@
 <?php
-//include $_SERVER["DOCUMENT_ROOT"]."/constants.php";
-include "/home/tahera/workspace/webApps/reader/includes/util.php";
+include_once $_SERVER["DOCUMENT_ROOT"]."/includes/util.php";
+//include_once "/home/tahera/workspace/webApps/reader/includes/util.php";
+include_once "Feed.php";
 
 //Singleton that manages Feeds in the database
 class FeedManager {

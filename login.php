@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title> Login to FeedAggregator </title>
-<script src="js/misc.js"></script>
-</head>
-<body>
 <?php
-include "classes/UserManager.php";
+include_once "classes/UserManager.php";
 // Get login info from session to check if user is already logged in
 session_start();
 $userManager = UserManager::getInstance();
+$errMsg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$username = htmlspecialchars($_POST["username"]);
 	$userId = $userManager->userExists($username);
@@ -20,32 +14,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			$_SESSION["currentUsername"] = $username;
 			$_SESSION["currentUserId"] = $userId;
 		}else {
-			echo "<p> ERROR: Incorrect password, please try again </p>";
+			$errMsg =  "<p> ERROR: Incorrect password, please try again </p>";
 		}	
-	}else echo "<p> ERROR: Username doesn't exist, please try again </p>";
+	}else $errMsg =  "<p> ERROR: Username doesn't exist, please try again </p>";
 }
 if (isset($_SESSION["currentUserId"])) {
 	if (isset($_GET["logout"]) && htmlspecialchars($_GET["logout"])) {
 		unset($_SESSION["currentUsername"]);
 		unset($_SESSION["currentUserId"]);
-		displayLoginForm();
 	} else {
-	echo "<p> Welcome {$_SESSION["currentUsername"]}</p>
-		  <button type=\"button\" onclick=\"gotoPage('login.php?logout=1')\">Logout</button> ";
+		header("Location: ".createRedirectURL("index.php"));
+		exit;
 	}
-}else displayLoginForm();
+}
 
-
-function displayLoginForm() {
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Login to FeedAggregator </title>
+<script src="js/misc.js"></script>
+</head>
+<body>
+	<?php echo $errMsg; ?>
 	<form method="post" action="login.php">	
 		Username: <input type="text" name="username" /><br>
 		Password: <input type="password" name="password" /><br>
 		<input type="submit" value="Submit" />
 	</form>
 	<p> New User? <a href="register.php"> Click here to register </a> </p>
-<?php
-}
-?>
 </body>
 </html>
