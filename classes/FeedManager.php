@@ -44,7 +44,14 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("SELECT Feed.* FROM UserFeedRel INNER JOIN Feed ON UserFeedRel.feed_id = Feed.id ".
 				"WHERE UserFeedRel.user_id = :userId");
 			if (!$this->execQuery($stmt, array (":userId" => $userId), "getFeeds: Get all feeds for given user")) return false;
- 			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) return $feeds;
+ 			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) {
+				// Unescape title, subtitle
+				foreach ($feeds as $feed) {
+					$feed->title = stripslashes($feed->title);
+					$feed->subtitle = stripslashes($feed->subtitle);
+				}
+				return $feeds;
+			}
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::getFeeds: ".$e->getMessage(), 0);
 		}
@@ -59,7 +66,14 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("SELECT Entry.*, UserEntryRel.status FROM Entry INNER JOIN UserEntryRel ON ".
 				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId");
 			if (!$this->execQuery($stmt, array(":feedId" => $feedId, ":userId" => $userId), "getEntries: Get all entries for given feed")) return false;
-			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) return $entries;
+			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) {
+				// Unescape title and content
+				foreach ($entries as $entry) {
+					$entry->title = stripslashes($entry->title);
+					$entry->content = stripslashes($entry->content);	
+				}
+				return $entries;
+			}
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::getFeeds: ".$e->getMessage(), 0);
 		}
@@ -73,13 +87,15 @@ class FeedManager {
 		try {
    		    // Check if feed already exists
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE feedId = :feedId");
-			if ($this->execQuery($stmt, array (":feedId" => $feed->feedId), "createFeed: Check if feed exists", false)) return false;
+			if (!$this->execQuery($stmt, array (":feedId" => $feed->feedId), "createFeed: Check if feed exists", false)) return false;
 			if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+				echo "In update";
 				//Feed already exists in the database
 				// Check if it has changed and update the entries
 				$feed->id = $row["id"];
 				if ($this->updateFeed($userId, $feed)) return $feed->id;
 			}else {
+				echo "In insert";
 				// Insert a new feed, along with its entries
 				$this->dbh->beginTransaction();
 				$feed->id = $this->insertFeedRec($userId, $feed);

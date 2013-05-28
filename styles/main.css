@@ -32,6 +32,15 @@
 html, body {
 	height: 100%;
 }
+
+.hidden {
+	display:none;
+
+}
+.errMsg {
+	color: rgb(255, 0, 0);
+
+}
 #content {
 	display: flex;
 	display: -webkit-flex; 
@@ -47,6 +56,16 @@ html, body {
 	-webkit-order: 2;
 }
 
+#content section {
+	border-color: rgb(200, 200, 200);
+	border-left-color: rgb(100, 100, 100);
+	border-width: 1px;
+	border-style: solid;
+	margin-top: 20px;
+	margin-bottom: 30px;
+	padding: 20px;
+
+}
 #content > nav {
 	width: 200px;
 	order: 1;

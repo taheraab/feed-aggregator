@@ -1,6 +1,5 @@
 <?php
-include "Feed.php";
-include "FeedManager.php";
+include_once "Feed.php";
 
 class FeedParser {
 
@@ -114,7 +113,7 @@ class FeedParser {
 						if ($this->xmlReader->hasValue) $entry->content = $this->xmlReader->value;
 						break;
 					case "link":
-						if ($this->xmlReader->getAttribute("rel") != "alternate") $entry->alternateLink = $this->xmlReader->getAttribute("href");
+						if ($this->xmlReader->getAttribute("rel") == "alternate") $entry->alternateLink = $this->xmlReader->getAttribute("href");
 						break;
 					case "author":
 						do {
@@ -245,15 +244,19 @@ class FeedParser {
 	}	
 	
 }
+/*
+include_once "FeedManager.php";
 
-//$p = new FeedParser();
-//$feed = $p->parseFeed("http://www.aayisrecipes.com/feed/");
+$p = new FeedParser();
+$feed = $p->parseFeed("http://www.aayisrecipes.com/feed/");
 
 //$feed = $p->parseFeed("http://feeds.feedburner.com/tedblog");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
 //var_dump($feed);
 $feedManager = FeedManager::getInstance();
-var_dump($feedManager->getFeeds(1));
-var_dump($feedManager->getEntries(1, 1));
+echo $feedManager->createFeed(1, $feed);
+//var_dump($feedManager->getFeeds(1));
+//var_dump($feedManager->getEntries(1, 1));
+*/
 ?>

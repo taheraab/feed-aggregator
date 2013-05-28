@@ -1,10 +1,30 @@
 <?php
-include_once("includes/util.php");
+include_once "includes/util.php";
+include_once "classes/FeedParser.php";
+include_once "classes/FeedManager.php";
 
 session_start();
 if (!isset($_SESSION["currentUserId"])) {
 	header("Location: ".createRedirectURL("login.php"));
 	exit;
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+	// Received a new subscription request
+	if (isset($_POST["url"])) {
+		$feedParser = new FeedParser();
+		$feedManager = FeedManager::getInstance();
+		$feed = $feedParser->parseFeed(htmlspecialchars($_POST["url"]));	
+		if ($feed) {
+			if(!$feedManager->createFeed($_SESSION["currentUserId"], $feed)) {
+				$newSubsErrMsg = "Couldn't create feed, try again";
+			}
+		}else {
+			$newSubsErrMsg = "Couldn't parse feed, try again";
+		}
+
+	}
+
+
 }
 ?>
 <!DOCTYPE html>
@@ -28,27 +48,20 @@ if (!isset($_SESSION["currentUserId"])) {
 	</header>
 		</div>
 	<div id="content">
-			<article>
-			<section>
-				<p> Feed1 title </p>
-				<p> Feed1 summary </p>
-			</section>
-			<section>
-				<p> Feed2 title</p>
-				<p> Feed2 summary</p>
-			</section>
+		<article id="entryList">
 		</article>
 		<nav>
-			<button type="button">Subscribe </button><br /><br />
+			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>
+			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
+			<form class="hidden" id="subsForm" method="post" action="index.php">
+				Atom/RSS Link: <input type="url" name="url" />
+				<input type="submit" value="Submit" />
+			</form> <br />
 			<a href="#"> Home </a>
 			<ul id="subsList">
 				<li><a href="#"> All Items</a> </li>
 				<li> <a href="#">Subscriptions</a> 
-					<ul>
-						<li><a href="#">Thinkers</a>
-							<ul><li><a href="#">Ted blog</a></li></ul>
-						</li>
-						<li><a href="#">Aayis Recipes</a></li>
+					<ul id="feedList">
 					</ul>
 				</li>
 			</ul>
