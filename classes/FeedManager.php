@@ -8,6 +8,7 @@ class FeedManager {
 	
 	private static $instance = null;
 	private $dbh = null;
+	private $purifier = null;
 	
 	private function __construct() {
 		$this->connectToDB();

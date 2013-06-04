@@ -1,5 +1,6 @@
 <?php
 include_once "Feed.php";
+include_once $_SERVER["DOCUMENT_ROOT"]."/htmlpurifier-4.5.0-lite/library/HTMLPurifier.auto.php";
 
 class FeedParser {
 
@@ -22,11 +23,11 @@ class FeedParser {
 						case "channel":
 							$feed = $this->parseChannelTag();
 							$this->xmlReader->close();
-							return $feed;
+							return ($feed) ? $this->sanitizeFeed($feed) : false;
 						case "feed":
 							$feed = $this->parseFeedTag();
 							$this->xmlReader->close();
-							return $feed;
+							return ($feed) ? $this->sanitizeFeed($feed) : false;
 					}
 				}
 			}
@@ -53,7 +54,7 @@ class FeedParser {
 					case "updated":
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$feed->updated = $date->getTimestamp();
+						if ($date) $feed->updated = $date->getTimestamp();
 						break;
 					case "link":
 						if ($this->xmlReader->getAttribute("rel") == "self") $feed->selfLink = $this->xmlReader->getAttribute("href");
@@ -75,15 +76,15 @@ class FeedParser {
 				}			
 			
 			}
-		}	
-		return $feed;
+		}
+		if ($feed->feedId && $feed->updated) return $feed;	// Return only valid feed
+		else return false;
 	}
 
 	//Function that returns an AtomEntry object
 	
 	private function parseEntryTag() {
 		$entry= new Entry();
-		$skipEntry = false;
 		while ($this->xmlReader->read()) {
 			if ($this->xmlReader->name == "entry") break; // reached end of entry
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
@@ -99,7 +100,7 @@ class FeedParser {
 					case "published":
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$entry->$elmName = $date->getTimestamp();
+						if ($date) $entry->$elmName = $date->getTimestamp();
 						break;
 					case "content":
 					case "summary":
@@ -128,9 +129,10 @@ class FeedParser {
 			
 			}
 		}	
-		return ($skipEntry)? false : $entry;
+		// Return only valid entry;
+		if ($entry->entryId && $entry->updated) return $entry;
+		else return false;
 	}
-
 
 	private function parseChannelTag() {
 		$feed = new Feed();
@@ -153,7 +155,7 @@ class FeedParser {
 					case "lastBuildDate": //maps to updated in both feed and entry
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$lastBuildDate = $feed->updated = $date->getTimestamp();
+						if ($date) $lastBuildDate = $feed->updated = $date->getTimestamp();
 						break;
 					case "managingEditor": //maps to author
 						$this->xmlReader->read();
@@ -162,10 +164,10 @@ class FeedParser {
 					case "pubDate": // maps to updated if not already set
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$pubDate = $date->getTimestamp();
+						if ($date) $pubDate = $date->getTimestamp();
 						break;
 					case "item": //maps to entry
-						$entry = $this->parseItemTag();
+						$entry = $this->parseItemTag();   
 						$feed->entries[] = $entry;
 						break;
 				}			
@@ -182,11 +184,11 @@ class FeedParser {
 				else $entry->updated = $currentDate->getTimestamp();
 			}
 			// If id is empty let's make good guesses for our required id property
-			if (empty($entry->id)) {
+			if (empty($entry->entryId)) {
 				// Use link as id, else pubDate , else use an index
 				if (!empty($entry->alternateLink)) $entry->entryId = $entry->alternateLink;
 				else if($entry->published) $entry->entryId = $entry->published;
-				else $entry->id = $i++;
+				else $entry->entryId = $i++;
 			}	
 		}
 	
@@ -216,7 +218,7 @@ class FeedParser {
 					case "pubDate": //maps to published
 						$this->xmlReader->read();
 						$date = new DateTime($this->xmlReader->value);
-						$entry->updated= $entry->published = $date->getTimestamp();
+						if ($date) $entry->updated= $entry->published = $date->getTimestamp();
 						break;
 					case "description": //maps to content
 						$this->xmlReader->read();
@@ -241,6 +243,31 @@ class FeedParser {
 	private function moveToCdataNode() {
 		while ($this->xmlReader->nodeType != XMLReader::CDATA) 
 			$this->xmlReader->read();
+	}
+
+
+	// Sanitize feed for safe database insertion and html display
+	private function sanitizeFeed(Feed $feed) {
+      // Configure html purifier
+        $config = HTMLPurifier_Config::createDefault();
+    //  $config->set("HTML.DocType", "HTML 4.01 Transitional"); not sure if I want this yet
+        $purifier = new HTMLPurifier($config);
+
+		$feed->title = filter_var($feed->title, FILTER_SANITIZE_STRING);
+		$feed->subtitle = $purifier->purify($feed->subtitle);
+		$feed->selfLink = filter_var($feed->selfLink, FILTER_SANITIZE_URL);
+		$feed->alternateLink = filter_var($feed->alternateLink, FILTER_SANITIZE_URL);
+		$feed->authors = filter_var($feed->authors, FILTER_SANITIZE_STRING);
+		
+		foreach($feed->entries as $entry) {
+			$entry->title = filter_var($entry->title, FILTER_SANITIZE_STRING);
+			$entry->authors= filter_var($entry->authors, FILTER_SANITIZE_STRING);
+			$entry->alternateLink = filter_var($entry->alternateLink, FILTER_SANITIZE_URL);
+			$entry->content = $purifier->purify($entry->content);
+		}
+		
+		return $feed;
+
 	}	
 	
 }
@@ -248,14 +275,13 @@ class FeedParser {
 include_once "FeedManager.php";
 
 $p = new FeedParser();
-$feed = $p->parseFeed("http://www.aayisrecipes.com/feed/");
 
-//$feed = $p->parseFeed("http://feeds.feedburner.com/tedblog");
+$feed = $p->parseFeed("http://feeds.feedburner.com/tedblog");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
-//var_dump($feed);
-$feedManager = FeedManager::getInstance();
-echo $feedManager->createFeed(1, $feed);
+var_dump($feed);
+//$feedManager = FeedManager::getInstance();
+//echo $feedManager->createFeed(1, $feed);
 //var_dump($feedManager->getFeeds(1));
 //var_dump($feedManager->getEntries(1, 1));
 */

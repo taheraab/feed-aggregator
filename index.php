@@ -36,6 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/misc.js"></script>
+
 </head>
 <body>	
 	<header>
@@ -57,9 +58,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				Atom/RSS Link: <input type="url" name="url" />
 				<input type="submit" value="Submit" />
 			</form> <br />
-			<a href="#"> Home </a>
+			<p><a href="#"> Home </a></p>
+			<p><a href="#"> All Items</a></p>
 			<ul id="subsList">
-				<li><a href="#"> All Items</a> </li>
 				<li> <a href="#">Subscriptions</a> 
 					<ul id="feedList">
 					</ul>

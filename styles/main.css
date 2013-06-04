@@ -31,6 +31,7 @@
 /* document styles */
 html, body {
 	height: 100%;
+	width: 100%;
 }
 
 .hidden {
@@ -44,16 +45,19 @@ html, body {
 #content {
 	display: flex;
 	display: -webkit-flex; 
-	height: 100%;
 	flex-flow: row nowrap;
 	-webkit-flex-flow: row nowrap;
+
 }
+
 #content > article {
 	min-width: 12em;
 	flex: 1;
 	-webkit-flex: 1;
 	order: 2;
 	-webkit-order: 2;
+	overflow-y: scroll;
+	height: 35em;
 }
 
 #content section {
@@ -64,8 +68,34 @@ html, body {
 	margin-top: 20px;
 	margin-bottom: 30px;
 	padding: 20px;
+	display: flex;
+	display: -webkit-flex;	
+	flex-flow: column nowrap;
+	-webkit-flex-flow: column nowrap;
+}
+
+#content section > div:first-of-type {
+	display: flex;
+	display: -webkit-flex;
+	flex-flow: row nowrap;
+	-webkit-flex-flow: row nowrap;
+}
+
+#content section > div:first-of-type > div:first-of-type {
+	flex: 1;
+	-webkit-flex: 1;
 
 }
+
+#content section .author {
+	font-size: smaller;	
+	
+}
+
+#content section .title {
+	font-size: large;
+}
+
 #content > nav {
 	width: 200px;
 	order: 1;
