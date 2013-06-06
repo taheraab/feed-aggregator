@@ -3,28 +3,25 @@
 	list-style-type:none;
 	padding:0;
 }
-.noListStyle {
+#subsList li > ul {
 	list-style-type: none;
 	padding: 0 2%;
 }
-.expanded > span:first-of-type {
+#subsList li > span:first-child {
 	background: url("../resources/ui-icons.png") no-repeat -68px -52px;
 	display:inline-block;
 	width: 9px;
 	height: 9px;
 }
-.expanded > ul:first-of-type {
-	display:block;
-}
 
-.collapsed > span:first-of-type {
+#subsList li.collapsed > span:first-child {
 	background: url("../resources/ui-icons.png") no-repeat -36px -52px;
 	display:inline-block;
 	width: 9px;
 	height: 9px;
 	
 }
-.collapsed > ul:first-of-type { 
+#subsList li.collapsed > ul { 
 	display:none;
 }
 
@@ -50,7 +47,7 @@ html, body {
 
 }
 
-#content > article {
+#entryList {
 	min-width: 12em;
 	flex: 1;
 	-webkit-flex: 1;
@@ -60,7 +57,7 @@ html, body {
 	height: 35em;
 }
 
-#content section {
+#entryList > section {
 	border-color: rgb(200, 200, 200);
 	border-left-color: rgb(100, 100, 100);
 	border-width: 1px;
@@ -74,25 +71,29 @@ html, body {
 	-webkit-flex-flow: column nowrap;
 }
 
-#content section > div:first-of-type {
+#entryList > section a:link {
+	color: rgb(0, 0, 0);
+
+}
+#entryList > section > div:first-child {
 	display: flex;
 	display: -webkit-flex;
 	flex-flow: row nowrap;
 	-webkit-flex-flow: row nowrap;
 }
 
-#content section > div:first-of-type > div:first-of-type {
+#entryList > section > div:first-child > div:first-child {
 	flex: 1;
 	-webkit-flex: 1;
 
 }
 
-#content section .author {
+#entryList > section .author {
 	font-size: smaller;	
 	
 }
 
-#content section .title {
+#entryList > section .title {
 	font-size: large;
 }
 
@@ -124,4 +125,16 @@ header > h1 {
 header > div > span {
 	margin-right: 20px;
 
-}	
+}
+
+#entryList > section.highlighted {
+	border-left-color: rgb(0, 0, 255);
+
+
+}
+
+#entryList > section.highlighted a:link {
+	color: rgb(0, 0, 255);
+
+}
+	
