@@ -10,7 +10,7 @@ class Entry {
 	public $content="";
 	public $contentType="text";
 	public $alternateLink="";
-	public $status;
+	public $status; //read/unread
 }
 
 class Feed {
@@ -23,5 +23,6 @@ class Feed {
 	public $authors="";
 	public $entries=array();
 	public $alternateLink="";
+	public $numUnreadEntries;
 }
 ?>

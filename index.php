@@ -50,6 +50,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		</div>
 	<div id="content">
 		<article id="entryList">
+		<form id="entriesForm" onsubmit = "updateEntries(event, $(this));" >
+		</form>
 		</article>
 		<nav>
 			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>

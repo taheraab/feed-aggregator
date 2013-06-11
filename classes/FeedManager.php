@@ -50,6 +50,13 @@ class FeedManager {
 				foreach ($feeds as $feed) {
 					$feed->title = stripslashes($feed->title);
 					$feed->subtitle = stripslashes($feed->subtitle);
+					// Get num of unread entry count for each feed
+					$stmt = $this->dbh->prepare("SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
+						"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId AND UserEntryRel.status = \"unread\"");
+					if (!$this->execQuery($stmt, array (":feedId" => $feed->id, ":userId" => $userId), "getFeeds: Get the unread entry count")) return false;
+					if ($result = $stmt->fetch(PDO::FETCH_NUM)) {
+						$feed->numUnreadEntries = $result[0];
+					}
 				}
 				return $feeds;
 			}
@@ -65,7 +72,7 @@ class FeedManager {
    		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT Entry.*, UserEntryRel.status FROM Entry INNER JOIN UserEntryRel ON ".
-				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId");
+				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId ORDER BY Entry.updated DESC");
 			if (!$this->execQuery($stmt, array(":feedId" => $feedId, ":userId" => $userId), "getEntries: Get all entries for given feed")) return false;
 			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) {
 				// Unescape title and content
