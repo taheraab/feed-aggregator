@@ -163,11 +163,17 @@ header > div > span {
 
 
 }
+#entryList section.updated {
+	background-color: rgb(245, 245, 245);
+}
 
 #entryList section.highlighted a:link {
 	color: rgb(0, 0, 255);
 
 }
 
-
+#entryList section:last-of-type {
+	height: 35em;
+	text-align: center;
+}
 	

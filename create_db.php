@@ -1,6 +1,6 @@
 <?php
 // This script creates the MySQL database schema for Feed Aggregator
-include "constants.php";
+include_once "includes/util.php";
 
 $procedure = <<<EOP
 CREATE PROCEDURE createDB()
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS User (id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 CREATE TABLE IF NOT EXISTS Feed (id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, feedId VARCHAR(100) NOT NULL, title VARCHAR(255), subtitle VARCHAR(255), selfLink VARCHAR(255), updated INT NOT NULL, authors VARCHAR(255), alternateLink VARCHAR(255));
 CREATE TABLE IF NOT EXISTS UserFeedRel (user_id TINYINT UNSIGNED, feed_id SMALLINT UNSIGNED, PRIMARY KEY (user_id, feed_id), FOREIGN KEY (user_id) REFERENCES User (id) ON DELETE CASCADE, FOREIGN KEY (feed_id) REFERENCES Feed (id) ON DELETE CASCADE);
 CREATE TABLE IF NOT EXISTS Entry (id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, entryId VARCHAR(100) NOT NULL, title VARCHAR(255), updated INT NOT NULL, authors VARCHAR(255), alternateLink VARCHAR(255), contentType VARCHAR(50), content TEXT, ts TIMESTAMP, feed_id SMALLINT UNSIGNED NOT NULL, FOREIGN KEY (feed_id) REFERENCES Feed (id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS  UserEntryRel (user_id TINYINT UNSIGNED, entry_id SMALLINT UNSIGNED, status ENUM ('unread', 'read') NOT NULL, PRIMARY KEY (user_id, entry_id), FOREIGN KEY (user_id) REFERENCES User (id) ON DELETE CASCADE, FOREIGN KEY (entry_id) REFERENCES Entry (id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS  UserEntryRel (user_id TINYINT UNSIGNED, entry_id SMALLINT UNSIGNED, status ENUM ('new', 'unread', 'read') NOT NULL, type ENUM ('unstarred', 'starred') NOT NULL, PRIMARY KEY (user_id, entry_id), FOREIGN KEY (user_id) REFERENCES User (id) ON DELETE CASCADE, FOREIGN KEY (entry_id) REFERENCES Entry (id) ON DELETE CASCADE);
 END
 EOP;
 

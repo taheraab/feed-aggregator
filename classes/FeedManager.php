@@ -52,7 +52,8 @@ class FeedManager {
 					$feed->subtitle = stripslashes($feed->subtitle);
 					// Get num of unread entry count for each feed
 					$stmt = $this->dbh->prepare("SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
-						"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId AND UserEntryRel.status = \"unread\"");
+						"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId AND ".
+						"(UserEntryRel.status = 'unread' OR UserEntryRel.status = 'new')");
 					if (!$this->execQuery($stmt, array (":feedId" => $feed->id, ":userId" => $userId), "getFeeds: Get the unread entry count")) return false;
 					if ($result = $stmt->fetch(PDO::FETCH_NUM)) {
 						$feed->numUnreadEntries = $result[0];
@@ -71,7 +72,7 @@ class FeedManager {
 	public function getEntries($userId, $feedId) {
    		if ($this->dbh == null) $this->connectToDB();
 		try {
-			$stmt = $this->dbh->prepare("SELECT Entry.*, UserEntryRel.status FROM Entry INNER JOIN UserEntryRel ON ".
+			$stmt = $this->dbh->prepare("SELECT Entry.*, UserEntryRel.status, UserEntryRel.type FROM Entry INNER JOIN UserEntryRel ON ".
 				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId ORDER BY Entry.updated DESC");
 			if (!$this->execQuery($stmt, array(":feedId" => $feedId, ":userId" => $userId), "getEntries: Get all entries for given feed")) return false;
 			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) {
@@ -97,13 +98,11 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE feedId = :feedId");
 			if (!$this->execQuery($stmt, array (":feedId" => $feed->feedId), "createFeed: Check if feed exists", false)) return false;
 			if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-				echo "In update";
 				//Feed already exists in the database
 				// Check if it has changed and update the entries
 				$feed->id = $row["id"];
 				if ($this->updateFeed($userId, $feed)) return $feed->id;
 			}else {
-				echo "In insert";
 				// Insert a new feed, along with its entries
 				$this->dbh->beginTransaction();
 				$feed->id = $this->insertFeedRec($userId, $feed);
@@ -232,6 +231,26 @@ class FeedManager {
 
 	}
 
+	// Updates UserEntryRel for given entries (objects containing values for UserEntryRel row)
+	// Returns true if all entries are updated , false on failure
+	public function updateUserEntryRelRecs($userId, $entries) {
+		if ($this->dbh == null) $this->connectToDB();
+		try {
+			$stmt = $this->dbh->prepare("UPDATE UserEntryRel SET status = :status, type = :type WHERE entry_id = :entryId AND user_id = :userId");
+			$result = true;
+			foreach($entries as $entry) {
+				if (!$this->execQuery($stmt, array(":userId" => $userId, ":entryId" => $entry->id, ":status" => $entry->status, ":type" => $entry->type),
+					"updateUserEntryRelRecs: Updating entry status and type for a given user"))
+					$result = false;
+			}
+			return $result;
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::updateUserEntryRelRecs: ".$e->getMessage(), 0);
+		}
+		return false;
+
+	}
+
 	// Inserts a single entry record, also updates UserEntryRel 
 	// Returns entryId on success, false on failure
 	private function insertEntryRec($userId, $feedId, Entry $entry) {
@@ -266,7 +285,7 @@ class FeedManager {
 				 ":alternateLink" => $entry->alternateLink, ":contentType" => $entry->contentType, ":content" => addslashes($entry->content), 
 		   		 ":id" => $entry->id);
 			if ($this->execQuery($stmt, $args, "updateEntryRec: Update Entry", true)) {
-				$stmt = $this->dbh->prepare("Update UserEntryRel SET status = 'unread' where entry_id = :id");
+				$stmt = $this->dbh->prepare("Update UserEntryRel SET status = 'new' where entry_id = :id");
 				if ($this->execQuery($stmt, array(":id" => $entry->id), "updateEntryRec: Update UserentryRel", true)) return true;
 			}
 		} catch (PDOException $e) {

@@ -11,6 +11,7 @@ class Entry {
 	public $contentType="text";
 	public $alternateLink="";
 	public $status; //read/unread
+	public $type; //starred/unstarred
 }
 
 class Feed {
