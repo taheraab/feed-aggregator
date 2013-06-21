@@ -1,6 +1,7 @@
 <?php
+
 include_once "Feed.php";
-include_once $_SERVER["DOCUMENT_ROOT"]."/htmlpurifier-4.5.0-lite/library/HTMLPurifier.auto.php";
+include_once (dirname(__FILE__)."/../htmlpurifier-4.5.0-lite/library/HTMLPurifier.auto.php");
 
 class FeedParser {
 
@@ -22,6 +23,7 @@ class FeedParser {
 							break;
 						case "channel":
 							$feed = $this->parseChannelTag();
+							$feed->selfLink = $feedURL;
 							$this->xmlReader->close();
 							return ($feed) ? $this->sanitizeFeed($feed) : false;
 						case "feed":

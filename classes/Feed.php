@@ -12,6 +12,7 @@ class Entry {
 	public $alternateLink="";
 	public $status; //read/unread
 	public $type; //starred/unstarred
+	public $lastCheckedAt=0;
 }
 
 class Feed {

@@ -1,6 +1,6 @@
 <?php
-include_once $_SERVER["DOCUMENT_ROOT"]."/includes/util.php";
-//include_once "/home/tahera/workspace/webApps/reader/includes/util.php";
+
+include_once (dirname(__FILE__)."/../includes/util.php");
 include_once "Feed.php";
 
 //Singleton that manages Feeds in the database
@@ -67,6 +67,23 @@ class FeedManager {
 		return false;
 	}
 
+	// Returns all feed records that were last checked for update before or at the given timestamp
+	public function getFeedsToUpdate($timestamp) {
+		if ($this->dbh == null) $this->connectToDB();
+		try {
+			$stmt = $this->dbh->prepare("SELECT id, selfLink FROM Feed WHERE lastCheckedAt <= :lastCheckedAt");
+			if ($this->execQuery($stmt, array (":lastCheckedAt" => $timestamp), "getFeedsToUpdate: Get all feeds that must be checked for update")) {
+ 				$feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed");
+				return $feeds;
+			}
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::getFeedsToUpdate: ".$e->getMessage(), 0);
+		}
+		return false;
+
+	}
+
+
 	// Returns all entries for a given feed and a given user
 	// Returns List of Entry objects on success, false on failure
 	public function getEntries($userId, $feedId) {
@@ -120,22 +137,24 @@ class FeedManager {
 		return false;
 	}
 
-	// Update an existing feed
+	// Update an existing feed, called when a new subscription is added for a user
 	// Returns true on success, false on failure
-	private function updateFeed($userId, Feed $feed) {
+	public function updateFeed($userId, Feed $feed) {
 		if ($this->dbh == null) $this->connectToDB();
 		try {	
 			$this->dbh->beginTransaction();
-			// Update UserFeedRel and UserEntryRel for the given user. This could be a new subscription
-			if(!$this->insertUserFeedRelRec($userId, $feed->id, true)) return false; //ignore duplicates
-			if(!$this->insertUserEntryRelRecs($userId, $feed->id, true)) return false; //ignore duplicates
+			if ($userId) { // if userId is given, then this is a new subscription
+				// Update UserFeedRel and UserEntryRel for the given user. This could be a new subscription
+				if(!$this->insertUserFeedRelRec($userId, $feed->id, true)) return false; //ignore duplicates
+				if(!$this->insertUserEntryRelRecs($userId, $feed->id, true)) return false; //ignore duplicates
+			}
 			// Check if feed updated value has changed 
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE id = :id AND updated < :updated");
 			if (!$this->execQuery($stmt, array(":id" => $feed->id, ":updated" => $feed->updated), 
 					"updateFeed: Check if feed has changed", true)) return false;
 			if ($stmt->fetch(PDO::FETCH_ASSOC)) {
 				// Feed has changed. Update Feed record
-				if(!$this->updateFeedRec($userId, $feed)) return false;
+				if(!$this->updateFeedRec($feed)) return false;
 				// Now check if any entry is modified or new entries are added
 				$stmt = $this->dbh->prepare("SELECT id, updated FROM Entry WHERE entryId = :entryId AND feed_id = :feed_id");
 				foreach ($feed->entries as $entry) {
@@ -147,15 +166,22 @@ class FeedManager {
 						$entry->id = $row["id"];
 						if ($entry->updated > $row["updated"]) { 
 							// entry has changed
-							if(!$this->updateEntryRec($userId, $entry)) return false;
+							if(!$this->updateEntryRec($entry)) return false;
 						}
 					}else {
 						// insert a new entry
-						if (!$this->insertEntryRec($userId, $feed->id, $entry)) return false;
+						if (!$this->insertEntryRec($feed->id, $entry)) return false;
 		
 					}
 				}
 
+			} else {
+				// Feed doesn't need to be updated, just change lastCheckedAt value
+				$stmt = $this->dbh->prepare("UPDATE Feed SET lastCheckedAt = :lastCheckedAt WHERE id = :id");
+				$now = new DateTime();
+				if (!$this->execQuery($stmt, array(":lastCheckedAt" => $now->getTimestamp(), ":id" => $feed->id), "updateFeed: update lastCheckedAt", true))
+					return false;
+				
 			}
 			$this->dbh->commit();
 			return true;
@@ -182,10 +208,12 @@ class FeedManager {
 	private function insertFeedRec($userId, Feed $feed) {
 		// insert feed record	
 		try {
-			$stmt = $this->dbh->prepare("INSERT INTO Feed (feedId, title, subtitle, selfLink, updated, authors, alternateLink) ".
-				"VALUES (:feedId, :title, :subtitle, :selfLink, :updated, :authors, :alternateLink)");
+			$stmt = $this->dbh->prepare("INSERT INTO Feed (feedId, title, subtitle, selfLink, updated, authors, alternateLink, lastCheckedAt) ".
+				"VALUES (:feedId, :title, :subtitle, :selfLink, :updated, :authors, :alternateLink, :lastCheckedAt)");
+			$now = new DateTime();
 			$args =array(":feedId" => $feed->feedId, ":title" => addslashes($feed->title), ":subtitle" => addslashes($feed->subtitle), 
-			":selfLink" => $feed->selfLink, ":updated" => $feed->updated, ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink);
+			":selfLink" => $feed->selfLink, ":updated" => $feed->updated, ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink, 
+			":lastCheckedAt" => $now->getTimestamp());
 	   		if ($this->execQuery($stmt, $args, "insertFeedRec: Inserting a new feed record", true)) {
 				// Insert new record in UserFeedRel
    				$feedId = $this->dbh->lastInsertId();
@@ -253,7 +281,7 @@ class FeedManager {
 
 	// Inserts a single entry record, also updates UserEntryRel 
 	// Returns entryId on success, false on failure
-	private function insertEntryRec($userId, $feedId, Entry $entry) {
+	private function insertEntryRec($feedId, Entry $entry) {
 		try {
 			$stmt = $this->dbh->prepare("INSERT INTO Entry (entryId, title, updated, authors, alternateLink, contentType, content, feed_id) ".
 				"VALUES (:entryId, :title, :updated, :authors, :alternateLink, :contentType, :content, :feed_id)");
@@ -277,7 +305,7 @@ class FeedManager {
 
 	// Update entry record , also updates Userentryrel
 	// Returns true on success, false on failure
-	private function updateEntryRec($userId, Entry $entry) {
+	private function updateEntryRec(Entry $entry) {
 		try {
 			$stmt = $this->dbh->prepare("UPDATE Entry SET title = :title, updated = :updated, authors = :authors, ".
 				"alternateLink = :alternateLink, contentType = :contentType, content = :content WHERE id = :id");
@@ -316,16 +344,18 @@ class FeedManager {
 
 	}
 
-	// Updates the feed record and corresponding UserFeedRel
+	// Updates the feed record 
 	// Returns true on success, false on failure
-	private function updateFeedRec($userId, Feed $feed) {
+	private function updateFeedRec(Feed $feed) {
 		try {
 			$stmt = $this->dbh->prepare("UPDATE Feed SET title = :title, subtitle = :subtitle, updated = :updated, authors = :authors, ".
-				"alternateLink = :alternateLink, selfLink = :selfLink WHERE id = :id");
+				"alternateLink = :alternateLink, selfLink = :selfLink, lastCheckedAt = :lastCheckedAt WHERE id = :id");
+			$now = new DateTime();
 			$args = array(":title" =>  addslashes($feed->title), ":subtitle" => addslashes($feed->subtitle), ":updated" => $feed->updated,
-				 ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink, ":selfLink" => $feed->selfLink, ":id" => $feed->id);
+				 ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink, ":selfLink" => $feed->selfLink, ":id" => $feed->id,
+				":lastCheckedAt" => $now->getTimestamp());
 			if ($this->execQuery($stmt, $args, "updateFeedRec: Update Feed record", true)) {
-				if ($this->insertUserFeedRelRec($userId, $feed->id, true)) return true; //ignore duplicates
+				 return true;
 			}
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::updateFeedRec: ".$e->getMessage(), 0);

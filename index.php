@@ -58,8 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				Atom/RSS Link: <input type="url" name="url" />
 				<input type="submit" value="Submit" />
 			</form> <br />
-			<p><a href="#"> Home </a></p>
-			<p><a href="#"> All Items</a></p>
+			<p><a href="index.php"> Home </a></p>
 			<ul id="subsList">
 				<li> <a href="#">Subscriptions</a> 
 					<ul id="feedList">
