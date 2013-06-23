@@ -44,7 +44,8 @@ class FeedManager {
 		try {
 			$stmt = $this->dbh->prepare("SELECT Feed.* FROM UserFeedRel INNER JOIN Feed ON UserFeedRel.feed_id = Feed.id ".
 				"WHERE UserFeedRel.user_id = :userId");
-			if (!$this->execQuery($stmt, array (":userId" => $userId), "getFeeds: Get all feeds for given user")) return false;
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			if (!$this->execQuery($stmt, "getFeeds: Get all feeds for given user")) return false;
  			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) {
 				// Unescape title, subtitle
 				foreach ($feeds as $feed) {
@@ -54,7 +55,9 @@ class FeedManager {
 					$stmt = $this->dbh->prepare("SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
 						"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId AND ".
 						"(UserEntryRel.status = 'unread' OR UserEntryRel.status = 'new')");
-					if (!$this->execQuery($stmt, array (":feedId" => $feed->id, ":userId" => $userId), "getFeeds: Get the unread entry count")) return false;
+					$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+					$stmt->bindValue(":feedId", (int)$feed->id, PDO::PARAM_INT);
+					if (!$this->execQuery($stmt, "getFeeds: Get the unread entry count")) return false;
 					if ($result = $stmt->fetch(PDO::FETCH_NUM)) {
 						$feed->numUnreadEntries = $result[0];
 					}
@@ -72,7 +75,8 @@ class FeedManager {
 		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT id, selfLink FROM Feed WHERE lastCheckedAt <= :lastCheckedAt");
-			if ($this->execQuery($stmt, array (":lastCheckedAt" => $timestamp), "getFeedsToUpdate: Get all feeds that must be checked for update")) {
+			$stmt->bindValue(":lastCheckedAt", $timestamp, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "getFeedsToUpdate: Get all feeds that must be checked for update")) {
  				$feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed");
 				return $feeds;
 			}
@@ -84,14 +88,26 @@ class FeedManager {
 	}
 
 
-	// Returns all entries for a given feed and a given user
+	// Returns requested number of entries with ids less than the lastLoadedEntryId
 	// Returns List of Entry objects on success, false on failure
-	public function getEntries($userId, $feedId) {
+	public function getEntries($userId, $feedId, $entryPageSize, $lastLoadedEntryId) {
    		if ($this->dbh == null) $this->connectToDB();
 		try {
-			$stmt = $this->dbh->prepare("SELECT Entry.*, UserEntryRel.status, UserEntryRel.type FROM Entry INNER JOIN UserEntryRel ON ".
-				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId ORDER BY Entry.updated DESC");
-			if (!$this->execQuery($stmt, array(":feedId" => $feedId, ":userId" => $userId), "getEntries: Get all entries for given feed")) return false;
+			$query = "SELECT Entry.*, UserEntryRel.status, UserEntryRel.type FROM Entry INNER JOIN UserEntryRel ON ".
+				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId ";
+			if ((int)$lastLoadedEntryId) {
+				// If this is not the first page
+				$query = $query."AND Entry.id < :entryId "; 
+			}
+			$query = $query."ORDER BY Entry.id DESC LIMIT :entryPageSize";
+			$stmt = $this->dbh->prepare($query);
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+		 	if ((int)$lastLoadedEntryId) $stmt->bindValue(":entryId", (int)$lastLoadedEntryId, PDO::PARAM_INT);
+			$stmt->bindValue(":entryPageSize", (int)$entryPageSize, PDO::PARAM_INT);
+			
+			if (!$this->execQuery($stmt, "getEntries: Get requested entries for given feed")) 
+				return false;
 			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) {
 				// Unescape title and content
 				foreach ($entries as $entry) {
@@ -101,7 +117,7 @@ class FeedManager {
 				return $entries;
 			}
 		} catch (PDOException $e) {
-			error_log("FeedAggregator::FeedManager::getFeeds: ".$e->getMessage(), 0);
+			error_log("FeedAggregator::FeedManager::getEntries: ".$e->getMessage(), 0);
 		}
 		return false;
 	}
@@ -113,7 +129,8 @@ class FeedManager {
 		try {
    		    // Check if feed already exists
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE feedId = :feedId");
-			if (!$this->execQuery($stmt, array (":feedId" => $feed->feedId), "createFeed: Check if feed exists", false)) return false;
+			$stmt->bindValue(":feedId", $feed->feedId, PDO::PARAM_STR);
+			if (!$this->execQuery($stmt, "createFeed: Check if feed exists", false)) return false;
 			if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				//Feed already exists in the database
 				// Check if it has changed and update the entries
@@ -150,17 +167,19 @@ class FeedManager {
 			}
 			// Check if feed updated value has changed 
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE id = :id AND updated < :updated");
-			if (!$this->execQuery($stmt, array(":id" => $feed->id, ":updated" => $feed->updated), 
-					"updateFeed: Check if feed has changed", true)) return false;
+			$stmt->bindValue(":id", (int)$feed->id, PDO::PARAM_INT);
+			$stmt->bindValue(":updated", (int)$feed->updated, PDO::PARAM_INT);
+			if (!$this->execQuery($stmt, "updateFeed: Check if feed has changed", true)) return false;
 			if ($stmt->fetch(PDO::FETCH_ASSOC)) {
 				// Feed has changed. Update Feed record
 				if(!$this->updateFeedRec($feed)) return false;
 				// Now check if any entry is modified or new entries are added
 				$stmt = $this->dbh->prepare("SELECT id, updated FROM Entry WHERE entryId = :entryId AND feed_id = :feed_id");
+				$stmt->bindValue(":entryid", $entry->entryId, PDO::PARAM_STR);
+				$stmt->bindValue(":feed_id", (int)$feed->id, PDO::PARAM_INT);
 				foreach ($feed->entries as $entry) {
 					// Check if this is a new entry
-					if (!$this->execQuery($stmt, array(":entryId" => $entry->entryId, ":feed_id" => $feed->id), 
-								"updateFeed: Check if entry s present", true)) return false;
+					if (!$this->execQuery($stmt, "updateFeed: Check if entry s present", true)) return false;
 					if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 						// entry is present, check if it needs to be updated
 						$entry->id = $row["id"];
@@ -179,7 +198,9 @@ class FeedManager {
 				// Feed doesn't need to be updated, just change lastCheckedAt value
 				$stmt = $this->dbh->prepare("UPDATE Feed SET lastCheckedAt = :lastCheckedAt WHERE id = :id");
 				$now = new DateTime();
-				if (!$this->execQuery($stmt, array(":lastCheckedAt" => $now->getTimestamp(), ":id" => $feed->id), "updateFeed: update lastCheckedAt", true))
+				$stmt->bindValue(":lastCheckedAt", $now->getTimestamp(), PDO::PARAM_INT);
+				$stmt->bindValue(":id", (int)$feed->id, PDO::PARAM_INT);
+				if (!$this->execQuery($stmt, "updateFeed: update lastCheckedAt", true))
 					return false;
 				
 			}
@@ -194,8 +215,8 @@ class FeedManager {
 
 	// Helper function to execute a query and log err Msg and optional rollback the transaction
 	// Returns the true on success, false on failure
-	private function execQuery($stmt, $args, $msg, $rollback = false) {
-	    $res = $stmt->execute($args);
+	private function execQuery($stmt, $msg, $rollback = false) {
+	    $res = $stmt->execute();
 		if (!$res) {
     		error_log("FeedAggregator::FeedManager:: ".$msg.": ".implode(",", $stmt->errorInfo()), 0);
 			if ($rollback) $this->dbh->rollBack();
@@ -211,9 +232,14 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("INSERT INTO Feed (feedId, title, subtitle, selfLink, updated, authors, alternateLink, lastCheckedAt) ".
 				"VALUES (:feedId, :title, :subtitle, :selfLink, :updated, :authors, :alternateLink, :lastCheckedAt)");
 			$now = new DateTime();
-			$args =array(":feedId" => $feed->feedId, ":title" => addslashes($feed->title), ":subtitle" => addslashes($feed->subtitle), 
-			":selfLink" => $feed->selfLink, ":updated" => $feed->updated, ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink, 
-			":lastCheckedAt" => $now->getTimestamp());
+			$stmt->bindValue(":feedId", $feed->feedId, PDO::PARAM_STR);
+			$stmt->bindValue(":title", addslashes($feed->title), PDO::PARAM_STR);
+			$stmt->bindValue(":subtitle", addslashes($feed->subtitle), PDO::PARAM_STR);
+			$stmt->bindValue(":selfLink", $feed->selfLink, PDO::PARAM_STR);
+			$stmt->bindValue(":updated", (int)$feed->updated, PDO::PARAM_INT);
+			$stmt->bindValue(":authors", $feed->authors, PDO::PARAM_STR);
+			$stmt->bindValue(":alternateLink", $feed->alternateLink, PDO::PARAM_STR);
+			$stmt->bindValue(":lastCheckedAt", $now->getTimestamp(), PDO::PARAM_INT);
 	   		if ($this->execQuery($stmt, $args, "insertFeedRec: Inserting a new feed record", true)) {
 				// Insert new record in UserFeedRel
    				$feedId = $this->dbh->lastInsertId();
@@ -232,8 +258,9 @@ class FeedManager {
 		$ignore = $ignoreDuplicates ? "IGNORE " : "";
 		try {
 			$stmt = $this->dbh->prepare("INSERT ".$ignore."INTO UserFeedRel (user_id, feed_id) VALUES (:userId, :feedId)");
-			if ($this->execQuery($stmt, array(":userId" => $userId, ":feedId" => $feedId), 
-				"insertUserFeedRelRec: Inserting new UseFeedRel record", true)) return true;
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "insertUserFeedRelRec: Inserting new UseFeedRel record", true)) return true;
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::insertUserFeedRelRec: ".$e->getMessage(), 0);
 		}
@@ -250,8 +277,9 @@ class FeedManager {
 		try {
 			$stmt = $this->dbh->prepare("INSERT ".$ignore.
 				"INTO UserEntryRel (user_id, entry_id) SELECT :userId, id FROM Entry WHERE feed_id = :feedId");
-			if ($this->execQuery($stmt, array(":userId" => $userId, ":feedId" => $feedId), 
-					"insertUserEntryRelRecs: Adding new records in UserEntryRel",true)) return true;
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "insertUserEntryRelRecs: Adding new records in UserEntryRel",true)) return true;
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::insertUserEntryRelRecs: ".$e->getMessage(), 0);
 		}
@@ -267,8 +295,11 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("UPDATE UserEntryRel SET status = :status, type = :type WHERE entry_id = :entryId AND user_id = :userId");
 			$result = true;
 			foreach($entries as $entry) {
-				if (!$this->execQuery($stmt, array(":userId" => $userId, ":entryId" => $entry->id, ":status" => $entry->status, ":type" => $entry->type),
-					"updateUserEntryRelRecs: Updating entry status and type for a given user"))
+				$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+				$stmt->bindValue(":entryId", (int)$entry->id, PDO::PARAM_INT);
+				$stmt->bindValue(":status", $entry->status, PDO::PARAM_STR);
+				$stmt->bindValue(":type", $entry->type, PDO::PARAM_STR);
+				if (!$this->execQuery($stmt, "updateUserEntryRelRecs: Updating entry status and type for a given user"))
 					$result = false;
 			}
 			return $result;
@@ -285,16 +316,23 @@ class FeedManager {
 		try {
 			$stmt = $this->dbh->prepare("INSERT INTO Entry (entryId, title, updated, authors, alternateLink, contentType, content, feed_id) ".
 				"VALUES (:entryId, :title, :updated, :authors, :alternateLink, :contentType, :content, :feed_id)");
-			$args = array(":entryId" => $entry->entryId, ":title" => addslashes($entry->title), ":updated" => $entry->updated, 
-				":authors" => $entry->authors, ":alternateLink" => $entry->alternateLink, ":contentType" => $entry->contentType, 
-				":content" => addslashes($entry->content), ":feed_id" => $feedId);
-			if ($this->execQuery($stmt, $args, "insertEntryRec: Inserting new entry", true)) {
+			$stmt->bindValue(":entryId", $entry->entryId, PDO::PARAM_STR);
+			$stmt->bindValue(":title", addslashes($entry->title), PDO::PARAM_STR);
+			$stmt->bindValue(":updated", (int)$entry->updated, PDO::PARAM_INT);
+			$stmt->bindValue(":authors", $entry->authors, PDO::PARAM_STR);
+			$stmt->bindValue(":alternateLink", $entry->alternateLink, PDO::PARAM_STR);
+			$stmt->bindValue(":contentType", $entry->contentType, PDO::PARAM_STR);
+			$stmt->bindValue(":content", addslashes($entry->content), PDO::PARAM_STR);
+			$stmt->bindValue(":feed_id", (int)$feedId, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "insertEntryRec: Inserting new entry", true)) {
 				$entryId = $this->dbh->lastInsertId();
 				// This method is called when inserting a new entry into an existing feed.
 				// So update UserEntryRel table for all users to whom this feed belongs
 				$stmt = $this->dbh->prepare("INSERT INTO UserEntryRel (user_id, entry_id) ".
 					"SELECT user_id, :entryId FROM UserFeedRel WHERE feed_id = :feedId");
-				if ($this->execQuery($stmt, array(":entryId" => $entryId, ":feedId" => $feedId), "insertEntryRec: Update UserEntryRel", true)) 
+				$stmt->bindValue(":entryId", (int)$entryId, PDO::PARAM_INT);
+				$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+				if ($this->execQuery($stmt, "insertEntryRec: Update UserEntryRel", true)) 
 					return $entryId;
 			}
 		} catch (PDOException $e) {
@@ -309,12 +347,17 @@ class FeedManager {
 		try {
 			$stmt = $this->dbh->prepare("UPDATE Entry SET title = :title, updated = :updated, authors = :authors, ".
 				"alternateLink = :alternateLink, contentType = :contentType, content = :content WHERE id = :id");
-			$args = array(":title" => addslashes($entry->title), ":updated" => $entry->updated, ":authors" => $entry->authors,
-				 ":alternateLink" => $entry->alternateLink, ":contentType" => $entry->contentType, ":content" => addslashes($entry->content), 
-		   		 ":id" => $entry->id);
-			if ($this->execQuery($stmt, $args, "updateEntryRec: Update Entry", true)) {
+			$stmt->bindValue(":title", addslashes($entry->title), PDO::PARAM_STR);
+			$stmt->bindValue(":updated", (int)$entry->updated, PDO::PARAM_INT);
+			$stmt->bindValue(":authors", $entry->authors, PDO::PARAM_STR);
+			$stmt->bindValue(":alternateLink", $entry->alternateLink, PDO::PARAM_STR);
+			$stmt->bindValue(":contentType", $entry->contentType, PDO::PARAM_STR);
+			$stmt->bindValue(":content", addslashes($entry->content), PDO::PARAM_STR);
+			$stmt->bindValue(":id", (int)$entry->id, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "updateEntryRec: Update Entry", true)) {
 				$stmt = $this->dbh->prepare("Update UserEntryRel SET status = 'new' where entry_id = :id");
-				if ($this->execQuery($stmt, array(":id" => $entry->id), "updateEntryRec: Update UserentryRel", true)) return true;
+				$stmt->bindValue(":id", (int)$entry->id, PDO::PARAM_INT);
+				if ($this->execQuery($stmt, "updateEntryRec: Update UserentryRel", true)) return true;
 			}
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::updateEntryRec: ".$e->getMessage(), 0);
@@ -330,10 +373,15 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("INSERT INTO Entry (entryId, title, updated, authors, alternateLink, contentType, content, feed_id) ".
 				"VALUES (:entryId, :title, :updated, :authors, :alternateLink, :contentType, :content, :feed_id)");
 			foreach ($entries as $entry) {
-				$args = array(":entryId" => $entry->entryId, ":title" => addslashes($entry->title), ":updated" => $entry->updated, 
-					":authors" => $entry->authors, ":alternateLink" => $entry->alternateLink, ":contentType" => $entry->contentType, 
-					":content" => addslashes($entry->content), ":feed_id" => $feedId);
-				if (!$this->execQuery($stmt, $args, "insertEntryRecs: Inserting new entry records", true)) return false;
+				$stmt->bindValue(":entryId", $entry->entryId, PDO::PARAM_STR);
+				$stmt->bindValue(":title", addslashes($entry->title), PDO::PARAM_STR);
+				$stmt->bindValue(":updated", (int)$entry->updated, PDO::PARAM_INT);
+				$stmt->bindValue(":authors", $entry->authors, PDO::PARAM_STR);
+				$stmt->bindValue(":alternateLink", $entry->alternateLink, PDO::PARAM_STR);
+				$stmt->bindValue(":contentType", $entry->contentType, PDO::PARAM_STR);
+				$stmt->bindValue(":content", addslashes($entry->content), PDO::PARAM_STR);
+				$stmt->bindValue(":feed_id", (int)$feedId, PDO::PARAM_INT);
+				if (!$this->execQuery($stmt, "insertEntryRecs: Inserting new entry records", true)) return false;
 			}
 			$lastEntryId = $this->dbh->lastInsertId();
 			if ($this->insertUserEntryRelRecs($userId, $feedId)) return $lastEntryId;	
@@ -351,10 +399,15 @@ class FeedManager {
 			$stmt = $this->dbh->prepare("UPDATE Feed SET title = :title, subtitle = :subtitle, updated = :updated, authors = :authors, ".
 				"alternateLink = :alternateLink, selfLink = :selfLink, lastCheckedAt = :lastCheckedAt WHERE id = :id");
 			$now = new DateTime();
-			$args = array(":title" =>  addslashes($feed->title), ":subtitle" => addslashes($feed->subtitle), ":updated" => $feed->updated,
-				 ":authors" => $feed->authors, ":alternateLink" => $feed->alternateLink, ":selfLink" => $feed->selfLink, ":id" => $feed->id,
-				":lastCheckedAt" => $now->getTimestamp());
-			if ($this->execQuery($stmt, $args, "updateFeedRec: Update Feed record", true)) {
+			$stmt->bindValue(":title", addslashes($feed->title), PDO::PARAM_STR);
+			$stmt->bindValue(":subtitle", addslashes($feed->subtitle), PDO::PARAM_STR);
+			$stmt->bindValue(":selfLink", $feed->selfLink, PDO::PARAM_STR);
+			$stmt->bindValue(":updated", (int)$feed->updated, PDO::PARAM_INT);
+			$stmt->bindValue(":authors", $feed->authors, PDO::PARAM_STR);
+			$stmt->bindValue(":alternateLink", $feed->alternateLink, PDO::PARAM_STR);
+			$stmt->bindValue(":lastCheckedAt", $now->getTimestamp(), PDO::PARAM_INT);
+			$stmt->bindValue(":id", (int)$feed->id, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "updateFeedRec: Update Feed record", true)) {
 				 return true;
 			}
 		} catch (PDOException $e) {

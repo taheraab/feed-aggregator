@@ -1,9 +1,11 @@
 var myFeeds = [];
-var myEntries = []; //entries corresponding to a selected feed
 var activeFeedId = 0;
 var activeEntryId = 0;
 var $activeEntry = null; // DOM object representing active entry
 var $activeFeed = null; // DOM object representing active feed
+var activeFeedIndex = 0;
+var entryPageSize = 20;
+var lastLoadedEntryId = 0;
 
 function EntryObj(id, status, type) {
 	this.id = id;
@@ -34,7 +36,7 @@ function loadFeeds() {
 		for (i = 0; i < myFeeds.length; i++) { 
 			var titleClass = "";
 			var unreadCount = "";
-			if (myFeeds[i].numUnreadEntries) {
+			if (parseInt(myFeeds[i].numUnreadEntries)) {
 				unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
 				titleClass = "class = 'unread'";
 			}
@@ -45,80 +47,111 @@ function loadFeeds() {
 		setActiveFeed(0, $("#feedList > li:first-child"));
 	});
 }
+
 // Called when a feed link in nav is clicked 
 function setActiveFeed(i, $elm) {
 	$activeFeed = $elm;
-	loadEntries(i);
-	return false; // prevent default link action
-}
-
-
-// Load entries for a given feed (index into myFeeds)
-function loadEntries(i) {
+	lastLoadedEntryId = 0; //(Non-existant entry id)  Get entries in reverse order from DB
+	$activeEntry = null;
 	// Before loading new feed entries, send updates for previous feed entries
 	updateEntries();
 	var $entryList = $("#entryList");
 	$entryList.empty();
+	activeFeedIndex = i; // index into myFeeds
 	$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
-	$.getJSON("manage_feeds.php?getEntries&feedId=" + myFeeds[i].id, function(entries) {
-		myEntries = entries;
+	loadEntries();
+	$entryList.scroll(setActiveEntry);
+	return false; // prevent default link action
+}
+
+// Load a page of entries from DB for active feed
+function loadEntries() {
+	var i = activeFeedIndex;
+	var $entryList = $("#entryList");
+	
+	//Remove section with id = more from entryList
+	$("#more").remove();
+	$.getJSON("manage_feeds.php?getEntries&feedId=" + myFeeds[i].id + "&entryPageSize=" + entryPageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
+	 function(entries) {
+		if (!entries) {
+			$entryList.append("<section id='last'> No more Entries </section>");
+			return;
+		}
 		var unreadCount = 0;
-		for (var i = 0; i < myEntries.length; i++) {
-			var content = "<section><div><div><div class='title'><a href='" + myEntries[i].alternateLink + "'>" + myEntries[i].title + "</a></div>";
-			if (myEntries[i].authors != "") content += "<div class='author'>by " + myEntries[i].authors + "</div>";
-			var updated = new Date(myEntries[i].updated * 1000); // convert unix timestamp into miliseconds
-			var checked = (myEntries[i].status == "unread")? "checked" : "";
-			var starred = (myEntries[i].type == "starred") ? "class='starred'" : "";
+		for (var i = 0; i < entries.length; i++) {
+			var content = "<section id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a href='" +
+				 entries[i].alternateLink + "'>" + entries[i].title + "</a></div>";
+			if (entries[i].authors != "") content += "<div class='author'>by " + entries[i].authors + "</div>";
+			var updated = new Date(entries[i].updated * 1000); // convert unix timestamp into miliseconds
+			var checked = (entries[i].status == "unread")? "checked" : "";
+			var starred = (entries[i].type == "starred") ? "class='starred'" : "";
 			content += "</div><div class='updated'>" + updated.toLocaleString() + "</div></div>";
-			content += "<br /><div>" + myEntries[i].content + "</div>";
-			content += "<br /><div class='toolbar'><input type='hidden' name='id' value='" + myEntries[i].id + 
+			content += "<br /><div>" + entries[i].content + "</div>";
+			content += "<br /><div class='toolbar'><input type='hidden' name='id' value='" + entries[i].id + 
 				"' /><span " + starred + " onclick='setEntryStarred($(this))'></span><input type='hidden' name='type' value='" + 
-				myEntries[i].type + "' />" + "<span> &nbsp;&nbsp; </span><input type='checkbox' name='status' value='" + myEntries[i].status + 
+				entries[i].type + "' />" + "<span> &nbsp;&nbsp; </span><input type='checkbox' name='status' value='" + entries[i].status + 
 				"' onchange='setEntryStatus($(this));' " + checked + "  />" + 
 				"<label for='status'> Keep unread</label></div></section>";
 			$entryList.append(content);
-			if (myEntries[i].status == "unread" && myEntries[i].status == "new") ++unreadCount;
+			if (entries[i].status == "unread" || entries[i].status == "new") ++unreadCount;
 		}
-		$entryList.append("<section id='last'>  No more Entries  </section>");
-		$activeEntry = $("#entryList section:first-of-type");
-		$activeEntry.addClass("highlighted");
-		//Add scroll event handler
-		$entryList.scroll(setActiveEntry);
-		// Set unread entry count for the active feed
-		if (unreadCount) {
-			var $spanElm = $activeFeed.find("span");
-			$spanElm.text("(" + unreadCount + ")");
-			$spanElm.prev().addClass("unread"); // style the related link 
+		lastLoadedEntryId = entries[entries.length- 1].id;
+		if (entries.length < entryPageSize) {
+			// The last entry has been received
+			$entryList.append("<section id='last'>  No more Entries  </section>");
+		}else {
+			$entryList.append("<section id='more'> Scroll down to view more entries </section>");
+
 		}
+		if ($activeEntry == null) {
+			// This is the first page
+			$activeEntry = $("#entryList section:first-of-type");
+			$activeEntry.addClass("highlighted");
+			// Set unread entry count for the active feed
+			updateUnreadCount("set", unreadCount);
+		}else {
+			// Increment unread count
+			updateUnreadCount("increment", unreadCount);
+		}
+
 	});
 }
 
 // Highlights the current visible entry in the #entryList viewPort and sets current entryId
+// called on scroll event
 function setActiveEntry() {
 	var $viewport = $(this);
-	//Check if current entry is still on top of the viewPort
-	var activeEntryTop = $activeEntry.position().top;
-	var activeEntryBottom = activeEntryTop + $activeEntry.outerHeight(true);
-	var viewportBottom = $viewport.innerHeight();
-	// If active entry has been scrolled up, replace it with next entry
-	if (activeEntryTop < 0 && $activeEntry.attr("id") != "last") {
-		$activeEntry.toggleClass("highlighted"); 
-		// Also change status to read
-		var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
-		if ($statusElm.val() == "new") {
-			$statusElm.val("read");
-			// decrement unread count for active feed
-	    	updateUnreadCount("decrement");
-			$activeEntry.addClass("updated");
+	if ($activeEntry != null) {
+		//Check if current entry is still on top of the viewPort
+		var activeEntryTop = $activeEntry.position().top;
+		var activeEntryBottom = activeEntryTop + $activeEntry.outerHeight(true);
+		var viewportBottom = $viewport.innerHeight();
+		// If active entry has been scrolled up, replace it with next entry
+		if (activeEntryTop < 0) {
+			if ($activeEntry.next().attr("id") == "more") {
+				// Load new entries if we've reached the bottom of scroll area
+				loadEntries();
+			} else if ($activeEntry.attr("id") != "last" && $activeEntry.next().length) {
+				$activeEntry.toggleClass("highlighted"); 
+				// Also change status to read
+				var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
+				if ($statusElm.val() == "new") {
+					$statusElm.val("read");
+					// decrement unread count for active feed
+			    	updateUnreadCount("decrement", 1);
+					$activeEntry.addClass("updated");
+				}
+				$activeEntry = $activeEntry.next();
+				$activeEntry.toggleClass("highlighted");
+			}
+		}else if (activeEntryBottom > viewportBottom) { 
+			// if it has been scrolled down, replace with prev entry
+			$activeEntry.toggleClass("highlighted");
+			$activeEntry = $activeEntry.prev();
+			$activeEntry.toggleClass("highlighted");
 		}
-		$activeEntry = $activeEntry.next();
-		$activeEntry.toggleClass("highlighted");
-	}else if (activeEntryBottom > viewportBottom) { 
-		// if it has been scrolled down, replace with prev entry
-		$activeEntry.toggleClass("highlighted");
-		$activeEntry = $activeEntry.prev();
-		$activeEntry.toggleClass("highlighted");
 	}
+
 	
 }
 
@@ -136,34 +169,42 @@ function setEntryStatus($elm) {
 	if ($elm.prop("checked")) {
 		$elm.val("unread"); 
 		// Increment unread count for active feed
-		updateUnreadCount("increment");
+		updateUnreadCount("increment", 1);
 	}else {
 		$elm.val("read");
-		updateUnreadCount("decrement");
+		updateUnreadCount("decrement", 1);
 	}
 	$elm.parent().parent().addClass("updated");
 }
 
-// Increments/Decrements unread count for active Feed element
-function updateUnreadCount(option) {
+// Increments/Decrements/Sets unread count for active Feed element
+function updateUnreadCount(option, step) {
 	var $spanElm = $activeFeed.find("span");
 	var countString = $spanElm.text(); 		
 	if (countString) {
 		var count = /\((\d+)\)/.exec(countString);
-		if(count[1]) {
-			if (option == 'decrement') 
-				if (--count[1]) 
-					$spanElm.text("(" + count[1] + ")");
+		var c = parseInt(count[1]);
+		if(c) {
+			if (option == "decrement") {
+				c -= step;
+				if (c) 
+					$spanElm.text("(" + c + ")");
 				else {
 					$spanElm.text("");
 					$spanElm.prev().toggleClass("unread"); // remove unread style for the title
 				}
-			else if (option == 'increment') 
-				$spanElm.text("(" + ++count[1] + ")");
+			}else if (option == "increment") {
+				c += step;
+				$spanElm.text("(" + c + ")");
+			}else if (option == "set") {
+				if (step) $spanElm.text("(" + step + ")");
+			}
 		}
-	}else if (option == "increment")  {
-		$spanElm.text("(1)");
-		$spanElm.prev().toggleClass("unread");	
+	}else if (option == "increment" || option == "set")  {
+		if (step) {
+			$spanElm.text("(" + step + ")");
+			$spanElm.prev().toggleClass("unread");
+		}	
 	}
 		
 }
@@ -180,7 +221,6 @@ function updateEntries() {
 	});
 	if (entriesToUpdate.length) {
 		var data = JSON.stringify(entriesToUpdate);
-		console.log(data);
 		if (data) {
 			$.ajax({
 				type: "POST",

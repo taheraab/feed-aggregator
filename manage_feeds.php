@@ -14,8 +14,10 @@ if (isset($_GET["getFeeds"])) {
 	$feeds = $feedManager->getFeeds($_SESSION["currentUserId"]);
 	$result = json_encode($feeds);
 }else if (isset($_GET["getEntries"])) {
-	$feedId = htmlspecialchars($_GET["feedId"]);
-	$entries = $feedManager->getEntries($_SESSION["currentUserId"], $feedId);
+	$feedId = filter_var($_GET["feedId"], FILTER_SANITIZE_NUMBER_INT);
+	$entryPageSize = filter_var($_GET["entryPageSize"], FILTER_SANITIZE_NUMBER_INT);
+	$lastLoadedEntryId = filter_var($_GET["lastLoadedEntryId"], FILTER_SANITIZE_NUMBER_INT);
+	$entries = $feedManager->getEntries($_SESSION["currentUserId"], $feedId, $entryPageSize, $lastLoadedEntryId);
 	$result = json_encode($entries);
 }else if (isset($_REQUEST["updateEntries"])) {
 	$entries = json_decode($HTTP_RAW_POST_DATA, false, 3);
