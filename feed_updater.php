@@ -59,11 +59,13 @@ function updateFeeds() {
 	foreach ($feedRecs as $feedRec) {
 		if ($feed = $feedParser->parseFeed($feedRec->selfLink)) {
 			$feed->id = $feedRec->id;
-			$feedManager->updateFeed(0, $feed);
+		echo $feedManager->updateFeed(0, $feed)."\n";
 		}
 
 	}
-	
+	// Delete entries that are older than 2 weeks 
+	$oldDate = $now->sub(new DateInterval("P2W")); // two weeks ago	
+	echo $feedManager->deleteOldEntries($oldDate->getTimestamp());
 }
 
 function signalHandler($sigNum) {

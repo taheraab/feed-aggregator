@@ -87,6 +87,22 @@ class FeedManager {
 
 	}
 
+	// Delete 'unstarred' and 'read' entries older than given timestamp
+	public function deleteOldEntries($timestamp) {
+		if ($this->dbh == null) $this->connectToDB();
+		try {
+		echo $timestamp."\n";
+			$stmt = $this->dbh->prepare("DELETE FROM Entry WHERE updated < :timestamp AND id NOT IN ".
+				"(SELECT DISTINCT entry_id FROM UserEntryRel WHERE type = 'starred' OR status = 'unread' OR status = 'new')");
+			$stmt->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
+			if ($this->execQuery($stmt, "deleteOldEntries: delete read entries older than given time")) {
+				return true;
+			}
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::deleteOldEntries: ".$e->getMessage(), 0);
+		}
+		return false;
+	}
 
 	// Returns requested number of entries with ids less than the lastLoadedEntryId
 	// Returns List of Entry objects on success, false on failure
