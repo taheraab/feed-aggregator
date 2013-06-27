@@ -104,21 +104,23 @@ class FeedManager {
 		return false;
 	}
 
-	// Returns requested number of entries with ids less than the lastLoadedEntryId
+	// Returns requested number of entries with ids less than the lastLoadedEntryId for a given feed.
+	// Returns all entries if feedId = 0;
 	// Returns List of Entry objects on success, false on failure
 	public function getEntries($userId, $feedId, $entryPageSize, $lastLoadedEntryId) {
    		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$query = "SELECT Entry.*, UserEntryRel.status, UserEntryRel.type FROM Entry INNER JOIN UserEntryRel ON ".
-				"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId ";
+				"Entry.id = UserEntryRel.entry_id WHERE UserEntryRel.user_id = :userId";
+			if ((int)$feedId) $query = $query." AND Entry.feed_id = :feedId";
 			if ((int)$lastLoadedEntryId) {
 				// If this is not the first page
-				$query = $query."AND Entry.id < :entryId "; 
+				$query = $query." AND Entry.id < :entryId"; 
 			}
-			$query = $query."ORDER BY Entry.id DESC LIMIT :entryPageSize";
+			$query = $query." ORDER BY Entry.id DESC LIMIT :entryPageSize";
 			$stmt = $this->dbh->prepare($query);
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
-			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+			if ((int)$feedId) $stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
 		 	if ((int)$lastLoadedEntryId) $stmt->bindValue(":entryId", (int)$lastLoadedEntryId, PDO::PARAM_INT);
 			$stmt->bindValue(":entryPageSize", (int)$entryPageSize, PDO::PARAM_INT);
 			
@@ -127,6 +129,16 @@ class FeedManager {
 			if ($entries = $stmt->fetchALL(PDO::FETCH_CLASS, "Entry")) {
 				// Unescape title and content
 				foreach ($entries as $entry) {
+					if (!(int)$feedId) {
+						// We're in all items, retrive feed title for each entry.
+						$stmt = $this->dbh->prepare("SELECT title from Feed WHERE id = :feedId");
+						$stmt->bindValue(":feedId", (int)$entry->feed_id, PDO::PARAM_INT);
+						if ($this->execQuery($stmt, "getEntries: Get feed title for 'All Items'")) {
+							if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+								$entry->feedTitle = stripslashes($row["title"]);
+							}
+						} 
+					}
 					$entry->title = stripslashes($entry->title);
 					$entry->content = stripslashes($entry->content);	
 				}

@@ -17,6 +17,7 @@ function EntryObj(id, status, type) {
 // Create the navigation menu
 $(document).ready(function(){
 	loadFeeds();
+	$("#entryList").scroll(setActiveEntry);
 	// create navigation list
 	$("#subsList").find("ul").parent().prepend("<span onclick=\"$(this).parent().toggleClass('collapsed');\" ></span> ");
 	setUpdateTimer();
@@ -33,17 +34,25 @@ function loadFeeds() {
 		myFeeds = feeds;
 		var i;
 		var $feedList = $("#feedList");
+		var allItemsUnreadCount = 0;
 		for (i = 0; i < myFeeds.length; i++) { 
 			var titleClass = "";
 			var unreadCount = "";
 			if (parseInt(myFeeds[i].numUnreadEntries)) {
+				allItemsUnreadCount += parseInt(myFeeds[i].numUnreadEntries);
 				unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
 				titleClass = "class = 'unread'";
 			}
 			$feedList.append("<li><img src = '" + myFeeds[i].alternateLink + "/favicon.ico' width='20px' height='20px'></img>" +
-			" <a " + titleClass + "href = '#' onclick = 'setActiveFeed(" + i + ", $(this).parent());' >" + 
+			" <a id='Feed" + myFeeds[i].id + "' " + titleClass + "href = '#' onclick = 'setActiveFeed(" + i + ", $(this).parent());' >" + 
 			myFeeds[i].title + " </a><span>" + unreadCount + "</span></li>");
 		}
+		//set unread count for All Items link
+		if (allItemsUnreadCount) {
+			$allItems = $("#allItems");
+			$allItems.find("a").toggleClass("unread");
+			$allItems.find("span").text("(" + allItemsUnreadCount + ")");
+		}	
 		setActiveFeed(0, $("#feedList > li:first-child"));
 	});
 }
@@ -58,20 +67,21 @@ function setActiveFeed(i, $elm) {
 	var $entryList = $("#entryList");
 	$entryList.empty();
 	activeFeedIndex = i; // index into myFeeds
-	$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
+	if (i != -1) {
+		$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
+	}
 	loadEntries();
-	$entryList.scroll(setActiveEntry);
 	return false; // prevent default link action
 }
 
 // Load a page of entries from DB for active feed
 function loadEntries() {
-	var i = activeFeedIndex;
 	var $entryList = $("#entryList");
-	
+
+	var feedId = (activeFeedIndex != -1)? myFeeds[activeFeedIndex].id : 0;	
 	//Remove section with id = more from entryList
-	$("#more").remove();
-	$.getJSON("manage_feeds.php?getEntries&feedId=" + myFeeds[i].id + "&entryPageSize=" + entryPageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
+	$("section[id='more']").remove();
+	$.getJSON("manage_feeds.php?getEntries&feedId=" + feedId + "&entryPageSize=" + entryPageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
 	 function(entries) {
 		if (!entries) {
 			$entryList.append("<section id='last'> No more Entries </section>");
@@ -81,7 +91,11 @@ function loadEntries() {
 		for (var i = 0; i < entries.length; i++) {
 			var content = "<section id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a href='" +
 				 entries[i].alternateLink + "'>" + entries[i].title + "</a></div>";
-			if (entries[i].authors != "") content += "<div class='author'>by " + entries[i].authors + "</div>";
+			if (activeFeedIndex == -1) {
+				// Show feed title instead of author
+				content += "<div class='author'> from  <a href='#' onclick=\"$('#Feed" + entries[i].feed_id + "').click(); return false;\">" + 
+					entries[i].feedTitle + "</a></div>";
+			}else if (entries[i].authors != "") content += "<div class='author'>by " + entries[i].authors + "</div>";
 			var updated = new Date(entries[i].updated * 1000); // convert unix timestamp into miliseconds
 			var checked = (entries[i].status == "unread")? "checked" : "";
 			var starred = (entries[i].type == "starred") ? "class='starred'" : "";
@@ -121,7 +135,7 @@ function loadEntries() {
 // called on scroll event
 function setActiveEntry() {
 	var $viewport = $(this);
-	if ($activeEntry != null) {
+	if ($activeEntry != null && $activeEntry.length) {
 		//Check if current entry is still on top of the viewPort
 		var activeEntryTop = $activeEntry.position().top;
 		var activeEntryBottom = activeEntryTop + $activeEntry.outerHeight(true);
@@ -144,7 +158,7 @@ function setActiveEntry() {
 				$activeEntry = $activeEntry.next();
 				$activeEntry.toggleClass("highlighted");
 			}
-		}else if (activeEntryBottom > viewportBottom) { 
+		}else if (activeEntryBottom > viewportBottom && $activeEntry.prev().length) { 
 			// if it has been scrolled down, replace with prev entry
 			$activeEntry.toggleClass("highlighted");
 			$activeEntry = $activeEntry.prev();

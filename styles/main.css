@@ -127,8 +127,9 @@ header > div > span {
 
 #entryList section .author {
 	font-size: smaller;	
-	
+	margin: 2px;	
 }
+
 
 #entryList section .title {
 	font-size: large;

@@ -60,6 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			</form> <br />
 			<p><a href="index.php"> Home </a></p>
 			<ul id="subsList">
+				<li id="allItems"> <a href="#" onclick = 'setActiveFeed(-1, $(this).parent());'> All Items </a> <span></span></li> <br />
 				<li> <a href="#">Subscriptions</a> 
 					<ul id="feedList">
 					</ul>

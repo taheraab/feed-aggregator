@@ -13,6 +13,7 @@ class Entry {
 	public $status; //read/unread
 	public $type; //starred/unstarred
 	public $lastCheckedAt=0;
+	public $feedTitle = "";
 }
 
 class Feed {
