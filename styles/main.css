@@ -20,7 +20,7 @@ header {
 	-webkit-flex-flow: row nowrap;
 }
 
-header > h1 {
+header > h2 {
 	flex: 1;
 	-webkit-flex: 1;
 	text-align: center;
@@ -76,20 +76,25 @@ header > div > span {
 	width: 200px;
 	order: 1;
 	-webkit-order: 1;
+	height: 35em;
+	overflow-y: auto;
 }
 
-#content > aside {
-	width: 200px;
-	order: 3;
-	-webkit-order: 3;
-}
 
+#content > div {
+	order:2;
+	-webkit-order:2;
+	display: flex;
+	display: -webkit-flex;
+	flex-flow: column nowrap;
+	-webkit-flex-flow: column nowrap;
+	flex: 1;
+	-webkit-flex: 1;
+}
 #entryList {
 	min-width: 12em;
 	flex: 1;
 	-webkit-flex: 1;
-	order: 2;
-	-webkit-order: 2;
 	overflow-y: scroll;
 	height: 35em;
 }
@@ -177,4 +182,8 @@ header > div > span {
 	height: 35em;
 	text-align: center;
 }
-	
+
+#entryList section.hidden {
+	display:none;
+
+}	

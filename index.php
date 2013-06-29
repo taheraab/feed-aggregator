@@ -40,17 +40,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>	
 	<header>
-		<h1>Feed Reader</h1>
+		<h2>Feed Reader</h2>
 		<div>
 <?php
 	echo "<span> Welcome ".$_SESSION["currentUsername"]."</span>";
-	echo "<button type=\"button\" onclick = \"gotoPage('login.php?logout=1')\"> Logout </button>";
 ?>		
-	</header>
+			<button onclick = "gotoPage('login.php?logout=1');"> Logout </button>
 		</div>
+	</header>
 	<div id="content">
-		<article id="entryList">
-		</article>
+		<div>
+			<div>
+				View &nbsp;<input type="radio" onchange = "filter = 'all'; filterView();" name="filter" checked >All </input> 
+				<input type="radio" onchange= "filter = 'starred'; filterView();" name="filter"  >Starred</input>
+				<input type="radio" onchange= "filter = 'unread'; filterView();" name="filter"  >Unread</input>
+				<input type="radio" onchange= "filter= 'read'; filterView();" name = "filter"  >Read</input>
+			</div>
+			<article id="entryList">
+			</article>
+		</div>
 		<nav>
 			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>
 			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
@@ -67,13 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				</li>
 			</ul>
 		</nav>
-		<aside>
-			<p> Aside </p>
-		</aside>
 	</div>
-	<footer>
-		<p> Footer </p>
-	</footer>
 </body>
 </html>
 

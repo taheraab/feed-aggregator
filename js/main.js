@@ -6,6 +6,7 @@ var $activeFeed = null; // DOM object representing active feed
 var activeFeedIndex = 0;
 var entryPageSize = 20;
 var lastLoadedEntryId = 0;
+var filter = "all";
 
 function EntryObj(id, status, type) {
 	this.id = id;
@@ -88,8 +89,16 @@ function loadEntries() {
 			return;
 		}
 		var unreadCount = 0;
-		for (var i = 0; i < entries.length; i++) {
-			var content = "<section id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a href='" +
+		for (var i = 0; i < entries.length; i++) { 
+			// filter entries before adding them
+			var hidden = "";
+			if (filter != "all") {
+				hidden = "class = 'hidden'";
+				if ((filter == entries[i].type || filter == entries[i].status) || (filter == "unread" && entries[i].status == 'new')) 
+					hidden = "";
+		
+			}
+			var content = "<section " + hidden + " id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a href='" +
 				 entries[i].alternateLink + "'>" + entries[i].title + "</a></div>";
 			if (activeFeedIndex == -1) {
 				// Show feed title instead of author
@@ -135,34 +144,46 @@ function loadEntries() {
 // called on scroll event
 function setActiveEntry() {
 	var $viewport = $(this);
-	if ($activeEntry != null && $activeEntry.length) {
+	if ($activeEntry != null) {
 		//Check if current entry is still on top of the viewPort
-		var activeEntryTop = $activeEntry.position().top;
-		var activeEntryBottom = activeEntryTop + $activeEntry.outerHeight(true);
-		var viewportBottom = $viewport.innerHeight();
 		// If active entry has been scrolled up, replace it with next entry
-		if (activeEntryTop < 0) {
-			if ($activeEntry.next().attr("id") == "more") {
-				// Load new entries if we've reached the bottom of scroll area
-				loadEntries();
-			} else if ($activeEntry.attr("id") != "last" && $activeEntry.next().length) {
-				$activeEntry.toggleClass("highlighted"); 
-				// Also change status to read
-				var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
-				if ($statusElm.val() == "new") {
-					$statusElm.val("read");
-					// decrement unread count for active feed
-			    	updateUnreadCount("decrement", 1);
-					$activeEntry.addClass("updated");
+		if ($activeEntry.position().top < 0) {
+			var $nextEntry = $activeEntry;
+			do {// loook for a valid next entry
+				$nextEntry = $nextEntry.next("section");
+			}while ($nextEntry.length && $nextEntry.hasClass("hidden"));
+			if ($nextEntry.length) { 
+				if ($nextEntry.attr("id") == "more") {
+					// Load new entries if we've reached the bottom of scroll area
+					loadEntries();
+				} else {
+					console.log("Change active to next");
+					$activeEntry.toggleClass("highlighted"); 
+					// Also change status to read
+					var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
+					if ($statusElm.val() == "new") {
+						$statusElm.val("read");
+						// decrement unread count for active feed
+			    		updateUnreadCount("decrement", 1);
+						$activeEntry.addClass("updated");
+					}
+					$activeEntry = $nextEntry;
+					$activeEntry.toggleClass("highlighted");
 				}
-				$activeEntry = $activeEntry.next();
+			}
+		}else { 
+			var $prevEntry = $activeEntry;
+			do {// loook for a valid prev entry
+				$prevEntry = $prevEntry.prev("section");
+			}while ($prevEntry.length && $prevEntry.hasClass("hidden"));
+			// If previous entry's top is visible scroll up to previous entry
+			if ($prevEntry.length && $prevEntry.position().top > 0) {
+				console.log("Change active to prev");
+				// if it has been scrolled down, replace with prev entry
+				$activeEntry.toggleClass("highlighted");
+				$activeEntry = $prevEntry;
 				$activeEntry.toggleClass("highlighted");
 			}
-		}else if (activeEntryBottom > viewportBottom && $activeEntry.prev().length) { 
-			// if it has been scrolled down, replace with prev entry
-			$activeEntry.toggleClass("highlighted");
-			$activeEntry = $activeEntry.prev();
-			$activeEntry.toggleClass("highlighted");
 		}
 	}
 
@@ -247,3 +268,16 @@ function updateEntries() {
 }
 
 
+// View filtered by starred, read, unread
+function filterView() {
+	if (filter == "all") {
+		$("#entryList section").removeClass("hidden");
+	}else {
+		$("#entryList section").addClass("hidden");
+		$("#entryList input[value='" + filter + "']").parent().parent().removeClass("hidden");
+		if (filter == "unread") $("#entryList input[value='new']").parent().parent().removeClass("hidden");
+		$("#entryList section#more").removeClass("hidden");
+		$("#entryList section#last").removeClass("hidden");
+	}
+
+}
