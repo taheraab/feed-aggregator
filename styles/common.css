@@ -1,0 +1,35 @@
+//* document styles */
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
+.hidden {
+    display:none;
+
+}
+.errMsg {
+    color: rgb(255, 0, 0);
+
+}
+
+header {
+    display: flex;
+    display: -webkit-flex;
+    flex-flow: row nowrap;
+    -webkit-flex-flow: row nowrap;
+	align-items: center;
+	-webkit-align-items: center;
+}
+
+header > h2 {
+    flex-grow: 1;
+    -webkit-flex-grow: 1;
+    text-align: center;
+}
+
+header #welcome > span {
+    margin-right: 20px;
+
+}
+

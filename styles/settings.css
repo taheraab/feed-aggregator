@@ -1,0 +1,32 @@
+@import url("common.css");
+
+#content {
+	margin-left: 10px;
+
+}
+
+h3 {
+	display:inline;
+
+}
+nav ul {
+	list-style-type: none;
+	padding: 0;
+
+}
+
+nav li {
+	display: inline;
+	margin: 5px;
+	padding: 5px;
+	background-color: rgb(200, 200, 200);
+	font-weight: bold;
+	cursor: pointer;
+
+}
+
+nav li.active {
+	color: rgb(255, 0, 0);
+	background-color: rgb(255, 255, 255);
+	border-top: 2px solid rgb(255, 0, 0);
+}

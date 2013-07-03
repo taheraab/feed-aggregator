@@ -70,6 +70,10 @@ function setActiveFeed(i, $elm) {
 	activeFeedIndex = i; // index into myFeeds
 	if (i != -1) {
 		$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
+		$("#unsubscribe input[type='submit']").prop("disabled", false);
+	}else {
+		// In all items, disable Unsubscribe
+		$("#unsubscribe input[type='submit']").prop("disabled", true);
 	}
 	loadEntries();
 	return false; // prevent default link action

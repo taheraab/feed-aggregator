@@ -39,33 +39,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 </head>
 <body>	
-	<header>
-		<h2>Feed Reader</h2>
+	<?php require_once "includes/header.php"; ?>
+	<div id="toolbar">
 		<div>
-<?php
-	echo "<span> Welcome ".$_SESSION["currentUsername"]."</span>";
-?>		
-			<button onclick = "gotoPage('login.php?logout=1');"> Logout </button>
-		</div>
-	</header>
-	<div id="content">
-		<div>
-			<div>
-				View &nbsp;<input type="radio" onchange = "filter = 'all'; filterView();" name="filter" checked >All </input> 
-				<input type="radio" onchange= "filter = 'starred'; filterView();" name="filter"  >Starred</input>
-				<input type="radio" onchange= "filter = 'unread'; filterView();" name="filter"  >Unread</input>
-				<input type="radio" onchange= "filter= 'read'; filterView();" name = "filter"  >Read</input>
-			</div>
-			<article id="entryList">
-			</article>
-		</div>
-		<nav>
 			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>
 			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
 			<form class="hidden" id="subsForm" method="post" action="index.php">
-				Atom/RSS Link: <input type="url" name="url" />
+				Atom/RSS Link: <br /><input type="url" name="url" />
 				<input type="submit" value="Submit" />
-			</form> <br />
+			</form> 
+		</div>
+		<div id="feedMenu">
+			View &nbsp;<input type="radio" onchange = "filter = 'all'; filterView();" name="filter" checked >All </input> 
+			<input type="radio" onchange= "filter = 'starred'; filterView();" name="filter"  >Starred</input>
+			<input type="radio" onchange= "filter = 'unread'; filterView();" name="filter"  >Unread</input>
+			<input type="radio" onchange= "filter= 'read'; filterView();" name = "filter"  >Read</input>
+		</div>
+		<div id="unsubscribe">
+			<form method="post" action="index.php" onsubmit="unsubscribe()">
+				<input type="hidden" name="feedId" ></input>
+				<input type="submit" value= "Unsubscribe" ></input>
+			</form>
+		</div>
+		<div id="settingsMenu">
+			<button type="button" onclick = "$(this).next().toggleClass('hidden');"> </button>
+			<ul class="hidden"> 
+				<li onclick = "window.location = 'settings.php';">Reader settings</li>
+				<li>Something Else Like</li>
+			</ul>
+		</diV>
+		
+	</div>
+	<div id="content">
+		<article id="entryList">
+		</article>
+		<nav>
 			<p><a href="index.php"> Home </a></p>
 			<ul id="subsList">
 				<li id="allItems"> <a href="#" onclick = 'setActiveFeed(-1, $(this).parent());'> All Items </a> <span></span></li> <br />
