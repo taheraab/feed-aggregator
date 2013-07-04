@@ -53,6 +53,7 @@ if ($pid == -1) {
 function updateFeeds() {
 	$feedParser = new FeedParser();
 	$feedManager = FeedManager::getInstance();
+	$entryManager = EntryManager::getInstance();
 	$now = new DateTime();
 	$lastCheckedAt = $now->sub(new DateInterval("PT30M")); // update every 30 minutes
 	$feedRecs = $feedManager->getFeedsToUpdate($lastCheckedAt->getTimestamp()); // Get Feeds that need update
@@ -65,7 +66,7 @@ function updateFeeds() {
 	}
 	// Delete entries that are older than 2 weeks 
 	$oldDate = $now->sub(new DateInterval("P2W")); // two weeks ago	
-	echo $feedManager->deleteOldEntries($oldDate->getTimestamp());
+	echo $entryManager->deleteOldEntries($oldDate->getTimestamp());
 }
 
 function signalHandler($sigNum) {
