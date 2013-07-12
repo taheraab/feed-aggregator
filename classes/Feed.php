@@ -27,7 +27,7 @@ class Feed {
 	public $entries=array();
 	public $alternateLink="";
 	public $numUnreadEntries;
-	public $folder_id="";
+	public $folder_id;
 }
 
 class Folder {

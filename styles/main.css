@@ -11,7 +11,7 @@
 }
 
 #toolbar > div:first-child {
-	width: 200px;
+	width: 300px;
 }
 
 #subsForm {
@@ -60,34 +60,76 @@
 }
 
 /* styles for a collapsible navigation list*/ 
-#subsList {
+nav > ul:first-of-type{
 	list-style-type:none;
 	padding:0;
 }
-#subsList li > ul {
+nav > ul:first-of-type li > ul {
 	list-style-type: none;
-	padding: 0 2%;
-}
-#subsList li > span:first-child {
-	background: url("../resources/icons.png") no-repeat -23px -3px;
-	display:inline-block;
-	width: 10px;
-	height: 10px;
+	padding: 0 0.5em;
 }
 
-#subsList li.collapsed > span:first-child {
+nav > ul:first-child .unread {
+	font-weight: bold;
+}
+#feedList li.feed, #allItems {
+	cursor: pointer;
+	text-decoration: underline;
+	margin: 0.2em;
+}
+
+#feedList li.feed {
+	font-size: smaller;
+}
+
+#feedList li.folder, #subscriptions {
+	margin: 0.2em;	
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+#subscriptions > div {	
+	display: inline;
+}
+
+
+#feedList li.folder > div > img, li.feed > img {
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+
+}
+#feedList li.folder > div > span:first-child, #subscriptions > div > span:first-child {
+	background: url("../resources/icons.png") no-repeat -23px -3px;
+	display:inline-block;
+	width: 12px;
+	height: 10px;
+	vertical-align: middle;
+}
+
+#feedList li.collapsed > div > span:first-child, #subscriptions.collapsed > div > span:first-child {
 	background: url("../resources/icons.png") no-repeat -37px -3px;
 	display:inline-block;
 }
 
-#subsList li.collapsed > ul { 
+#feedList li.collapsed > ul, #subscriptions.collapsed > ul{ 
 	display:none;
 }
 
-#subsList .unread {
+#feedList li.highlighted {
+	color: rgb(0, 0, 255);
+}
+
+#feedList li.active > div {
 	font-weight: bold;
 }
 
+#newFolder {
+	cursor: pointer;
+	margin-left: 40px;
+	vertical-align: middle;
+
+}
 
 /* styles for navigation and content */
 #content {

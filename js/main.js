@@ -3,10 +3,13 @@ var activeFeedId = 0;
 var activeEntryId = 0;
 var $activeEntry = null; // DOM object representing active entry
 var $activeFeed = null; // DOM object representing active feed
+var $activeFolder = null;
 var activeFeedIndex = 0;
 var entryPageSize = 20;
 var lastLoadedEntryId = 0;
 var filter = "all";
+var activeFolderId = 0;
+var rootId;
 
 function EntryObj(id, status, type) {
 	this.id = id;
@@ -17,15 +20,37 @@ function EntryObj(id, status, type) {
 
 // Create the navigation menu
 $(document).ready(function(){
-	loadFeeds();
+	loadFolders();
 	$("#entryList").scroll(setActiveEntry);
-	// create navigation list
-	$("#subsList").find("ul").parent().prepend("<span onclick=\"$(this).parent().toggleClass('collapsed');\" ></span> ");
 	setUpdateTimer();
 });
 
 function setUpdateTimer() {
 	window.setTimeout(updateEntries(), 60000); // save updated entries after 60 secs 
+
+}
+
+// Load folders into navigation menu
+function loadFolders() {
+	$.getJSON("manage_feeds.php?getFolders", function(folders) {
+		if (!folders) return;
+		var content = "";
+		for (var i = 0; i < folders.length; i++) {
+			if (folders[i].name == "root" ) {
+				rootId = folders[i].id;
+				content += "<li><ul id='root" + rootId + "'></ul></li>";
+			}else {
+				// Create a navigation entry for each folder 
+				content += "<li class='folder' ><div onclick='setActiveFolder(" + folders[i].id + ",$(this).parent());'>" + 
+				"<span></span><img src='resources/folder_icon.png' ><span>" + folders[i].name + "</span></div><ul id='folder" + 
+				folders[i].id + "'> </ul></li>";
+			}
+			
+		}	
+		$("#feedList").append(content);
+		// Now load feeds
+		loadFeeds();
+	});
 
 }
 
@@ -44,23 +69,32 @@ function loadFeeds() {
 				unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
 				titleClass = "class = 'unread'";
 			}
-			$feedList.append("<li><img src = '" + myFeeds[i].alternateLink + "/favicon.ico' width='20px' height='20px'></img>" +
-			" <a id='Feed" + myFeeds[i].id + "' " + titleClass + "href = '#' onclick = 'setActiveFeed(" + i + ", $(this).parent());' >" + 
-			myFeeds[i].title + " </a><span>" + unreadCount + "</span></li>");
+		
+			var content = "<li class='feed' onclick = 'setActiveFeed(" + i + ", $(this));'><img src = '" + 
+				myFeeds[i].alternateLink + "/favicon.ico'></img> <span id='feed" + myFeeds[i].id + "' " + titleClass + "  >" + 
+				myFeeds[i].title + " </span><span>" + unreadCount + "</span></li>";
+			if (myFeeds[i].folder_id == rootId) $feedList.append(content); 
+			else {
+				$feedList.find("#folder" + myFeeds[i].folder_id).append(content);
+			}
 		}
 		//set unread count for All Items link
 		if (allItemsUnreadCount) {
 			$allItems = $("#allItems");
-			$allItems.find("a").toggleClass("unread");
-			$allItems.find("span").text("(" + allItemsUnreadCount + ")");
-		}	
-		setActiveFeed(0, $("#feedList > li:first-child"));
+			$allItems.find("span.first-child").toggleClass("unread");
+			$allItems.find("span:last-child").text("(" + allItemsUnreadCount + ")");
+		}
+
+		// Set the first feed as active feed	
+		$("#feedList li.feed").first().click();
 	});
 }
 
 // Called when a feed link in nav is clicked 
 function setActiveFeed(i, $elm) {
+	if ($activeFeed != null) $activeFeed.toggleClass("highlighted");
 	$activeFeed = $elm;
+	$activeFeed.toggleClass("highlighted");
 	lastLoadedEntryId = 0; //(Non-existant entry id)  Get entries in reverse order from DB
 	$activeEntry = null;
 	// Before loading new feed entries, send updates for previous feed entries
@@ -69,6 +103,7 @@ function setActiveFeed(i, $elm) {
 	$entryList.empty();
 	activeFeedIndex = i; // index into myFeeds
 	if (i != -1) {
+		activeFolderId = myFeeds[i].folder_id;
 		$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
 		$("#unsubscribe input[type='submit']").prop("disabled", false);
 	}else {
@@ -76,7 +111,15 @@ function setActiveFeed(i, $elm) {
 		$("#unsubscribe input[type='submit']").prop("disabled", true);
 	}
 	loadEntries();
-	return false; // prevent default link action
+}
+
+// Called when a folder item is clicked
+function setActiveFolder(id, $elm) {
+	if ($activeFolder != null) $activeFolder.toggleClass("active");
+	$activeFolder = $elm;
+	$activeFolder.toggleClass("active");
+	activeFolderId = id;
+	$elm.toggleClass("collapsed");
 }
 
 // Load a page of entries from DB for active feed
@@ -161,7 +204,6 @@ function setActiveEntry() {
 					// Load new entries if we've reached the bottom of scroll area
 					loadEntries();
 				} else {
-					console.log("Change active to next");
 					$activeEntry.toggleClass("highlighted"); 
 					// Also change status to read
 					var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
@@ -182,7 +224,6 @@ function setActiveEntry() {
 			}while ($prevEntry.length && $prevEntry.hasClass("hidden"));
 			// If previous entry's top is visible scroll up to previous entry
 			if ($prevEntry.length && $prevEntry.position().top > 0) {
-				console.log("Change active to prev");
 				// if it has been scrolled down, replace with prev entry
 				$activeEntry.toggleClass("highlighted");
 				$activeEntry = $prevEntry;
@@ -218,7 +259,7 @@ function setEntryStatus($elm) {
 
 // Increments/Decrements/Sets unread count for active Feed element
 function updateUnreadCount(option, step) {
-	var $spanElm = $activeFeed.find("span");
+	var $spanElm = $activeFeed.find("span:last-child");
 	var countString = $spanElm.text(); 		
 	if (countString) {
 		var count = /\((\d+)\)/.exec(countString);
@@ -284,4 +325,33 @@ function filterView() {
 		$("#entryList section#last").removeClass("hidden");
 	}
 
+}
+
+//set Folder Id to active folder Id
+function setFolderId($form) {
+	var folderId;
+	if (activeFolderId)	folderId = activeFolderId;
+	else folderId = rootId;
+	$form.find("input[name='folderId']").val(folderId);
+	return true;
+}
+
+// Called when new folder icon is clicked
+function createFolder() {
+	// Ask for folder name 
+	var name = window.prompt("Enter new folder name", "New Folder");
+	if ((name != null) && (name != "") ) {
+		// Add folder to DB and make it active
+		$.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
+			console.log(id);
+			if (!id) {
+				alert ("Cannot create folder with the given name, please try again");
+				
+			}else {
+				$("#feedList").append("<li class='folder' ><div onclick='setActiveFolder(" + id + ",$(this).parent());'>" + 
+				"<span></span><img src='resources/folder_icon.png' ><span>" + name + "</span></div><ul id='folder" + id + "'> </ul></li>");
+				$("#feedList > li:last-child > div").click();
+			}
+		});
+	}
 }

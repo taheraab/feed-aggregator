@@ -1,38 +1,20 @@
 <?php
-include_once $_SERVER["DOCUMENT_ROOT"]."/includes/util.php";
+include_once "DBManager.php";
 
 //Singleton that manages Users in the database
-class UserManager {
+class UserManager extends DBManager {
     const CRYPT_SALT = "\$2y\$07\$feedaggregatorpassword";
 	
-	private static $instance = null;
-	private $dbh = null;
 	
-	private function __construct() {
-		$this->connectToDB();
+	public function __construct() {
+		parent::__construct();
 	}
 
-	function __destruct() {
-		$this->dbh = null;
-	}
-
-
-	// Convenience method to connect or reconnect to DB 
-	private function connectToDB() {
-		try {
-			$this->dbh = new PDO(MYSQL_DSN, DB_USERNAME, DB_PASSWORD);
-			// throw exceptions on PDO errors, an exception will also rollback any transactions
-			$this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); 
-		}catch (PDOException $e) {
-    		error_log("FeedAggregator::UserManager::connectToDB: ".$e->getMessage(), 0);		
-		}
-	}
-
-	public static function getInstance() {
-		if (self::$instance == null) self::$instance = new UserManager();
-		return self::$instance;
+	public function __destruct() {
+		parent::__destruct();
 		
 	}
+
 	
 	// Checks if the given user exists in the database
 	//Returns userId on success, false on failure
@@ -40,7 +22,8 @@ class UserManager {
 		if ($this->dbh == null) $this->connectToDB();
         try {
 			$stmt = $this->dbh->prepare("SELECT id FROM User WHERE username = :username");
-    	    if ($this->execQuery($stmt, array(":username" => $username), "userExists: Check if username is present")) {
+			$stmt->bindValue(":username", $username, PDO::PARAM_STR);
+    	    if ($this->execQuery($stmt, "userExists: Check if username is present")) {
 				if($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					return $row["id"];
 				}
@@ -56,7 +39,8 @@ class UserManager {
 		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT password FROM User WHERE id = :userId");
-        	if ($this->execQuery($stmt, array(":userId" => $userId), "authenticate user")) {	
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+        	if ($this->execQuery($stmt, "authenticate user")) {	
 				// will return exactly one row
 				if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					if (crypt($password, self::CRYPT_SALT) == $row["password"]) return true;
@@ -75,11 +59,21 @@ class UserManager {
 	public function createUser(User $user) {
 		if ($this->dbh == null) $this->connectToDB();
 		try {
-			$stmt = $this->dbh->prepare("INSERT INTO User (name, username, password) VALUES(:name, :username, :password)");
-			$args = array(":name" => $user->getName(), ":username" => $user->getUsername(), ":password" => $user->getPassword());
-			if ($this->execQuery($stmt, $args, "createUser: insert a new user record")) {
-				return $this->dbh->lastInsertId();
-			}
+			$this->dbh->beginTransaction();
+			$stmt = $this->dbh->prepare("INSERT INTO User (name, username, password) VALUES (:name, :username, :password)");
+			$stmt->bindValue(":name", $name, PDO::PARAM_STR);
+			$stmt->bindValue(":username", $username, PDO::PARAM_STR);
+			$stmt->bindValue(":password", $password, PDO::PARAM_STR);
+			if ($this->execQuery($stmt, "createUser: insert a new user record", true)) {
+				$userId = $this->dbh->lastInsertId();
+				// Insert a root folder record for this user
+				$stmt = $this->dbh->prepare("INSERT INTO Folder (name, user_id) VALUES ('root', :userId)");
+				$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+				if ($this->execQuery($stmt, "createUser: insert root folder record", true)) {
+					$this->dbh->commit();
+					return $userId;
+				}
+			}	
 		}catch (PDOException $e) {
 			error_log("FeedAggregator::UserManager::createUser: ".$e->getMessage(),0);
 		}
@@ -87,15 +81,6 @@ class UserManager {
 	}
 
 
-   // Helper function to execute a query and log err Msg 
-    // Returns true on success, false on failure
-    private function execQuery($stmt, $args, $msg) {
-        $result = $stmt->execute($args);
-        if (!$result) {
-            error_log("FeedAggregator::UserManager:: ".$msg.": ".implode(",", $stmt->errorInfo()), 0);
-        }
-        return $result;
-	}
 	
 }
 

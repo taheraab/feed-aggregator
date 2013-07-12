@@ -8,22 +8,6 @@ if (!isset($_SESSION["currentUserId"])) {
 	header("Location: ".createRedirectURL("login.php"));
 	exit;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	// Received a new subscription request
-	if (isset($_POST["url"])) {
-		$feedParser = new FeedParser();
-		$feedManager = FeedManager::getInstance();
-		$feed = $feedParser->parseFeed(htmlspecialchars($_POST["url"]));	
-		if ($feed) {
-			if(!$feedManager->createFeed($_SESSION["currentUserId"], $feed)) {
-				$newSubsErrMsg = "Couldn't create feed, try again";
-			}
-		}else {
-			$newSubsErrMsg = "Couldn't parse feed, try again";
-		}
-
-	}
-}
 ?>
 <!DOCTYPE html>
 <html>

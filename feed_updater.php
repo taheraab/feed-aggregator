@@ -52,8 +52,8 @@ if ($pid == -1) {
 
 function updateFeeds() {
 	$feedParser = new FeedParser();
-	$feedManager = FeedManager::getInstance();
-	$entryManager = EntryManager::getInstance();
+	$feedManager = new FeedManager();
+	$entryManager = new EntryManager();
 	$now = new DateTime();
 	$lastCheckedAt = $now->sub(new DateInterval("PT30M")); // update every 30 minutes
 	$feedRecs = $feedManager->getFeedsToUpdate($lastCheckedAt->getTimestamp()); // Get Feeds that need update

@@ -6,15 +6,15 @@ include_once "Feed.php";
 //Singleton that manages Feed Entries in the database
 class EntryManager extends DBManager{
 	
-	private static $instance = null;
-	
-	public static function getInstance() {
-		if (self::$instance == null) self::$instance = new EntryManager();
-		return self::$instance;
-		
+	public function __construct($dbh = null) {
+		parent::__construct($dbh);
+
 	}
 
-
+	public function __destruct() {
+		parent::__destruct();
+	
+	}
 
 	// Delete 'unstarred' and 'read' entries older than given timestamp
 	public function deleteOldEntries($timestamp) {

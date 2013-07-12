@@ -2,6 +2,7 @@
 include_once "includes/util.php";
 include_once "classes/FeedParser.php";
 include_once "classes/FeedManager.php";
+include_once "classes/FolderManager.php";
 
 session_start();
 if (!isset($_SESSION["currentUserId"])) {
@@ -11,11 +12,12 @@ if (!isset($_SESSION["currentUserId"])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	// Received a new subscription request
 	if (isset($_POST["url"])) {
+		$folderId = filter_var($_POST["folderId"], FILTER_SANITIZE_NUMBER_INT);
 		$feedParser = new FeedParser();
-		$feedManager = FeedManager::getInstance();
+		$feedManager = new FeedManager();
 		$feed = $feedParser->parseFeed(htmlspecialchars($_POST["url"]));	
 		if ($feed) {
-			if(!$feedManager->createFeed($_SESSION["currentUserId"], $feed)) {
+			if(!$feedManager->createFeed($_SESSION["currentUserId"], $folderId, $feed)) {
 				$newSubsErrMsg = "Couldn't create feed, try again";
 			}
 		}else {
@@ -23,8 +25,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		}
 
 	}
-
-
 }
 ?>
 <!DOCTYPE html>
@@ -44,7 +44,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		<div>
 			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>
 			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
-			<form class="hidden" id="subsForm" method="post" action="index.php">
+			<form class="hidden" id="subsForm" method="post" action="index.php" onsubmit="setFolderId($(this))">
+				<input type='hidden' name='folderId' />
 				Atom/RSS Link: <br /><input type="url" name="url" />
 				<input type="submit" value="Submit" />
 			</form> 
@@ -75,9 +76,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		</article>
 		<nav>
 			<p><a href="index.php"> Home </a></p>
-			<ul id="subsList">
-				<li id="allItems"> <a href="#" onclick = 'setActiveFeed(-1, $(this).parent());'> All Items </a> <span></span></li> <br />
-				<li> <a href="#">Subscriptions</a> 
+			<ul>
+				<li id="allItems" onclick = "setActiveFeed(-1, $(this).parent());"> <span> All Items </span> 
+					<span></span></li><br />
+				<li id="subscriptions" ><div onclick="$(this).parent().toggleClass('collapsed');"> <span ></span><span>Subscriptions</span></div>
+					<img id="newFolder" src="resources/new_folder_icon.png" onclick="createFolder();" /> 
 					<ul id="feedList">
 					</ul>
 				</li>

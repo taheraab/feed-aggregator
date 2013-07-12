@@ -2,22 +2,21 @@
 
 include_once "DBManager.php";
 include_once "Feed.php";
+include_once "EntryManager.php";
 
 //Singleton that manages Feeds in the database
 class FeedManager extends DBManager{
 	
-	private static $instance = null;
 	private $entryManager = null;
 		
-	private function __construct() {
-		$entryManager = EntryManager::getInstance();
+	public function __construct() {
+		parent::__construct();
+		$this->entryManager = new EntryManager($this->dbh);
 	}
 
+	public function __destruct() {
+		parent::__destruct();
 
-	public static function getInstance() {
-		if (self::$instance == null) self::$instance = new FeedManager();
-		return self::$instance;
-		
 	}
 
 	//Get Feed recs for folder organization on the Settings page
@@ -50,7 +49,7 @@ class FeedManager extends DBManager{
 	public function getFeeds($userId) {
    		if ($this->dbh == null) $this->connectToDB();
 		try {
-			$stmt = $this->dbh->prepare("SELECT Feed.* FROM UserFeedRel INNER JOIN Feed ON UserFeedRel.feed_id = Feed.id ".
+			$stmt = $this->dbh->prepare("SELECT Feed.*, UserFeedRel.folder_id FROM UserFeedRel INNER JOIN Feed ON UserFeedRel.feed_id = Feed.id ".
 				"WHERE UserFeedRel.user_id = :userId");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
 			if (!$this->execQuery($stmt, "getFeeds: Get all feeds for given user")) return false;
@@ -116,7 +115,7 @@ class FeedManager extends DBManager{
 				$feed->id = $this->insertFeedRec($userId, $folderId, $feed);
 				if ($feed->id) {
 					// Insert entries
-					if ($entryManager->insertEntryRecs($userId, $feed->id, $feed->entries)) {
+					if ($this->entryManager->insertEntryRecs($userId, $feed->id, $feed->entries)) {
 						$this->dbh->commit();
 						return $feed->id; 
 					}
@@ -159,11 +158,11 @@ class FeedManager extends DBManager{
 						$entry->id = $row["id"];
 						if ($entry->updated > $row["updated"]) { 
 							// entry has changed
-							if(!$entryManager->updateEntryRec($entry)) return false;
+							if(!$this->entryManager->updateEntryRec($entry)) return false;
 						}
 					}else {
 						// insert a new entry
-						if (!$entryManager->insertEntryRec($feed->id, $entry)) return false;
+						if (!$this->entryManager->insertEntryRec($feed->id, $entry)) return false;
 		
 					}
 				}
@@ -204,7 +203,7 @@ class FeedManager extends DBManager{
 			$stmt->bindValue(":authors", $feed->authors, PDO::PARAM_STR);
 			$stmt->bindValue(":alternateLink", $feed->alternateLink, PDO::PARAM_STR);
 			$stmt->bindValue(":lastCheckedAt", $now->getTimestamp(), PDO::PARAM_INT);
-	   		if ($this->execQuery($stmt, $args, "insertFeedRec: Inserting a new feed record", true)) {
+	   		if ($this->execQuery($stmt, "insertFeedRec: Inserting a new feed record", true)) {
 				// Insert new record in UserFeedRel
    				$feedId = $this->dbh->lastInsertId();
 				if($this->insertUserFeedRelRec($userId, $folderId, $feedId)) return $feedId;

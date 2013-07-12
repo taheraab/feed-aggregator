@@ -7,11 +7,12 @@ class DBManager {
 	
 	protected $dbh = null;
 		
-	private function __construct() {
-		$this->connectToDB();
+	public function __construct($dbh = null) {
+		if ($dbh == null) $this->connectToDB();
+		else $this->dbh = $dbh;
 	}
 
-	function __destruct() {
+	public function __destruct() {
 		$this->dbh = null;
 	}
 

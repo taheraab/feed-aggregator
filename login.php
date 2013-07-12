@@ -2,7 +2,7 @@
 include_once "classes/UserManager.php";
 // Get login info from session to check if user is already logged in
 session_start();
-$userManager = UserManager::getInstance();
+$userManager = new UserManager();
 $errMsg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$username = htmlspecialchars($_POST["username"]);

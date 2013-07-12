@@ -2,7 +2,7 @@
 include_once "classes/UserManager.php";
 include_once "includes/util.php";
 session_start();
-$userManager = UserManager::getInstance();
+$userManager = new UserManager();
 $errMsg = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
