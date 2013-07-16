@@ -23,8 +23,10 @@ if (!isset($_SESSION["currentUserId"])) {
 <body>	
 	<?php require_once "includes/header.php"; ?>
 	<div id="content">
-		<h3> Settings &nbsp; &nbsp;</h3>
-		<a href="index.php">&lt;&lt; back to reader </a>
+		<div>
+			<h3> Settings &nbsp; &nbsp;</h3>
+			<a href="index.php">&lt;&lt; back to reader </a>
+		</div>
 		<nav>
 			<ul>
 				<li onclick = "setActiveTab($(this), 'subscriptions');">Subscriptions</li>
@@ -52,8 +54,11 @@ if (!isset($_SESSION["currentUserId"])) {
 				<label for="subscriptionFile">Select an OPML file </label><input type="file" name="subscriptionFile"> </input> <br />
 				<input type="submit" value="Upload"></input>
 			</section>
-			<section id="folders">
+			<section id="folders" class="hidden">
 				<h4> Folders </h4>
+				Select &nbsp; <input type="radio" >All</input>
+				<input type="radio" name="selectFeeds" value="none">None</input>&emsp; &emsp;
+				<img class="delete" src="resources/delete_icon.png" /> 
 				<div id="folderList">
 
 				</div> 

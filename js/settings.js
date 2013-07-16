@@ -4,15 +4,15 @@ var myFolders = null;
 
 $(document).ready(function() {
 	setActiveTab($("nav li:first-child"), $("article section:first-child").attr("id"));
-
+	loadFolders();
 }); 
 
 function setActiveTab($tab, sectionId) {
 	if (sectionId == "subscriptions") {
-		loadFolders();
-		loadFeeds();
+		//loadFolders();
+		//loadFeeds();
 	}else if (sectionId == "folders") {
-		loadFolders();
+		//loadFolders();
 
 	}
 	$section = $("#" + sectionId);
@@ -28,22 +28,24 @@ function setActiveTab($tab, sectionId) {
 
 function loadFolders() {
 	$.getJSON("manage_feeds.php?getFolders", function(folders) {
-		if ($folders) return;
+		if (!folders) return;
 		myFolders = folders;
 		$folderList = $("#folderList");
 		$folderList.empty();
 		$actions = $("#actions");
 		$actions.empty();
 		var folderListContent = "";
-		var actionsContent = "<option selected>Add To Folder</option>";
+		var actionsContent = "<option selected>Add To Folder...</option>";
 		for (var i = 0; i < folders.length; i++) {
-			folderListContent += "<div id='Folder" + folders[i].id + "'> <span>" + folders[i].name + " </span>&nbsp; " +
-				"<button type='button'>Rename</button>&nbsp;<img src='resources/delete_icon.png' width='20px' height='20px'/></div>"
+			folderListContent += "<div id='Folder" + folders[i].id + "'> <input type='checkbox' /><span id='folderName'>" + folders[i].name + " </span> " +
+				"<div><button type='button'>Rename</button></div><img src='resources/delete_icon.png' class='delete'/></div>"
 			actionsContent += "<option name='" + folders[i].id + "'>" + folders[i].name + "</option>";
 		}
-		actionsContent += "<option name='new'>New Folder</option>";
+		actionsContent += "<option name='new'>New Folder...</option>";
 		$folderList.append(folderListContent);
 		$actions.append(actionsContent);
+
+		loadFeeds();
 	});
 
 }
@@ -53,18 +55,21 @@ function loadFeeds() {
       	$feedList = $("#feedList");
 		$feedList.empty();
 		var content = "";
+		var currentFolderName = "";
 		for (var i = 0; i < feeds.length; ++i) {
-			content += "<div id='Feed" + feeds[i].id + "'> <input type='checkbox'></input> <div><span>" + feeds[i].title + 
-				"</span><br /><span>(" + feeds[i].selfLink + ")</span></div> <button type='button'>Unsubscribe</button>";
+			content += "<div id='Feed" + feeds[i].id + "'> <input type='checkbox'></input> <div id='feedName'><span>" + feeds[i].title + "</span>";
+			if (feeds[i].selfLink.length) 
+				content += "<br /><span>(" + feeds[i].selfLink + ")</span>";
+			content += "</div> <div><button type='button'>Unsubscribe</button></div>";
 			if (feeds[i].folder_id) {
-				content += "<span>" + feeds[i].folder_id + "</span> &nbsp;"
-				content += "<select><option selected > Change Folder...</option>";
-			}else content += "<select><option selected > Add to Folder...</option>";
+				currentFolderName = "<span>" + $("#Folder" + feeds[i].folder_id).find("#folderName").text() + "</span>"; 
+				content += "<div><select><option selected > Change Folder...</option>";
+			}else content += "<div><select><option selected > Add to Folder...</option>";
 			for (var j = 0; j < myFolders.length; j++) {
-				content += "<option name='" + folders[i].id + "'>" + folders[i].name + "</option>"
+				content += "<option name='" + myFolders[j].id + "'>" + myFolders[j].name + "</option>"
 
 			}
-			content += "<option name='new'>New Folder</option></select>";
+			content += "<option name='new'>New Folder...</option></select></div>" + currentFolderName + "</div>";
 			
 		}
 		

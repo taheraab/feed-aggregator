@@ -2,7 +2,6 @@
 
 #content {
 	margin-left: 10px;
-
 }
 
 h3 {
@@ -30,3 +29,45 @@ nav li.active {
 	background-color: rgb(255, 255, 255);
 	border-top: 2px solid rgb(255, 0, 0);
 }
+
+img.delete {
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	vertical-align: middle;
+
+}
+
+#folderList, #feedList {
+	height: 35em;
+	margin-top: 1em;
+	overflow-y: auto;
+
+}
+#folderList > div, #feedList > div {
+	display: flex;
+	display: -webkit-flex;
+	flex-flow: row nowrap;
+	-webkit-flex-flow: row nowrap;
+}
+
+#folderList > div {
+	width: 30%;
+}
+
+#folderList > div > *, #feedList > div > * {
+	margin-right: 1em;
+	margin-bottom: 0.5em;
+}
+
+#folderName {
+	width: 10em;
+	overflow-x: auto;
+}
+
+#feedName {
+	width: 30em;
+	overflow-x: auto;
+
+}
+

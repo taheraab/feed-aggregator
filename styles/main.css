@@ -72,6 +72,7 @@ nav > ul:first-of-type li > ul {
 nav > ul:first-child .unread {
 	font-weight: bold;
 }
+
 #feedList li.feed, #allItems {
 	cursor: pointer;
 	text-decoration: underline;
@@ -158,6 +159,7 @@ nav > ul:first-child .unread {
 	-webkit-flex-grow: 1;
 	overflow-y: scroll;
 	height: 35em;
+	margin-left: 1em;
 }
 
 #entryList section {

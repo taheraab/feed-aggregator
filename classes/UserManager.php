@@ -1,13 +1,15 @@
 <?php
 include_once "DBManager.php";
+include_once "FolderManager.php";
 
 //Singleton that manages Users in the database
 class UserManager extends DBManager {
     const CRYPT_SALT = "\$2y\$07\$feedaggregatorpassword";
-	
+	private $folderManager;	
 	
 	public function __construct() {
 		parent::__construct();
+		$folderManager = new FolderManager($this->dbh);
 	}
 
 	public function __destruct() {
@@ -67,9 +69,7 @@ class UserManager extends DBManager {
 			if ($this->execQuery($stmt, "createUser: insert a new user record", true)) {
 				$userId = $this->dbh->lastInsertId();
 				// Insert a root folder record for this user
-				$stmt = $this->dbh->prepare("INSERT INTO Folder (name, user_id) VALUES ('root', :userId)");
-				$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
-				if ($this->execQuery($stmt, "createUser: insert root folder record", true)) {
+				if ($this->foldManager->createFolder($userId, "root")) {
 					$this->dbh->commit();
 					return $userId;
 				}

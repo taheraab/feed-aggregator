@@ -23,7 +23,7 @@ class FolderManager extends DBManager{
 			$stmt = $this->dbh->prepare("INSERT INTO Folder (name, user_id) VALUES (:name, :userId)");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
 			$stmt->bindValue(":name", $name, PDO::PARAM_STR);
-			if (!$this->execQuery($stmt, "createFolder: create a new folder for a given user")) return false;
+			if (!$this->execQuery($stmt, "createFolder: create a new folder for a given user", true)) return false;
 			return $this->dbh->lastInsertId();
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FolderManager::createFolder: ".$e->getMessage(), 0);
