@@ -69,8 +69,8 @@ class FeedManager extends DBManager{
 						$feed->numUnreadEntries = $result[0];
 					}
 				}
-				return $feeds;
 			}
+			return $feeds;
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::getFeeds: ".$e->getMessage(), 0);
 		}
@@ -108,7 +108,7 @@ class FeedManager extends DBManager{
 				//Feed already exists in the database
 				// Check if it has changed and update the entries
 				$feed->id = $row["id"];
-				if ($this->updateFeed($userId, $feed, $folderId)) return $feed->id;
+				if ($this->updateFeed($userId, $folderId, $feed)) return $feed->id;
 			}else {
 				// Insert a new feed, along with its entries
 				$this->dbh->beginTransaction();
@@ -136,7 +136,7 @@ class FeedManager extends DBManager{
 			if ($userId) { // if userId is given, then this is a new subscription
 				// Update UserFeedRel and UserEntryRel for the given user. This could be a new subscription
 				if(!$this->insertUserFeedRelRec($userId, $folderId, $feed->id, true)) return false; //ignore duplicates
-				if(!$this->insertUserEntryRelRecs($userId, $feed->id, true)) return false; //ignore duplicates
+				if(!$this->entryManager->insertUserEntryRelRecs($userId, $feed->id, true)) return false; //ignore duplicates
 			}
 			// Check if feed updated value has changed 
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE id = :id AND updated < :updated");
@@ -258,6 +258,52 @@ class FeedManager extends DBManager{
 		}
 		return false;
 	}
+
+	// Changes folder for a feed for a given user
+	//Returns true on success, false on failure
+	public function changeFolder($userId, $feedId, $newFolderId) {
+		if ($this->dbh == null) $this->connectToDB();
+		try {
+			$stmt = $this->dbh->prepare("UPDATE UserFeedRel SET folder_id = :newFolderId WHERE feed_id = :feedId AND user_id = :userId");
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+			$stmt->bindValue(":newFolderId", (int)$newFolderId, PDO::PARAM_INT);
+			return $this->execQuery($stmt, "changeFolder: Change folder to which feed belongs");
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::changeFolder: ".$e->getMessage(), 0);
+		}
+		return false;
+
+	}
+
+
+	// Unsubscribe user from given feed
+	// Returns true on success, false on failure
+	public function unsubscribeFeed($userId, $feedId) {
+		if ($this->dbh == null) $this->connectToDB();
+		try {
+			$this->dbh->beginTransaction();
+			// First remove all entry association 
+			$stmt = $this->dbh->prepare("DELETE FROM UserEntryRel WHERE user_id = :userId AND entry_id IN (SELECT id FROM Entry WHERE feed_id = :feedId)");
+			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+			if($this->execQuery($stmt, "unsubscribeFeed: Delete user entry association", true)) {
+				// Remove  user Feed  Association 
+				$stmt = $this->dbh->prepare("DELETE FROM UserFeedRel WHERE user_id = :userId AND feed_id = :feedId");
+				$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+				$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+				if($this->execQuery($stmt, "unsubscribeFeed: Delete user feed association", true)) {
+					$this->dbh->commit();	
+					return true;
+				}
+
+			}
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::unsubscribeFeed: ".$e->getMessage(), 0);
+		}
+		return false;
+	}
+
 
 }
 

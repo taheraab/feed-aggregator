@@ -4,7 +4,7 @@
 <?php
     echo "<span> Welcome ".$_SESSION["currentUsername"]."</span>";
 ?>
-            <button onclick = "gotoPage('login.php?logout=1');"> Logout </button>
+            <button onclick = "gotoPage('login.php?logout');"> Logout </button>
         </div>
 
     </header>

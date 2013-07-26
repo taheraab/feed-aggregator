@@ -6,13 +6,14 @@ $userManager = new UserManager();
 $errMsg = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	if ($userManager->userExists(htmlspecialchars($_POST["username"]))) {
+	$username = filter_var($_POST["username"], FILTER_SANITIZE_STRING);
+	if ($userManager->userExists($username)) {
 		$errMsg = "<p> ERROR: Username not available, try again </p>";
 	} else {
 		//Add user to the database and session	
-		if (isset($_POST["firstname"])) $name = htmlspecialchars($_POST["firstname"]);
- 		if (isset($_POST["lastname"])) $name = $name." ".htmlspecialchars($_POST["lastname"]);
-		$user = new User($name, htmlspecialchars($_POST["username"]), htmlspecialchars($_POST["password"]));
+		if (isset($_POST["firstname"])) $name = filter_var($_POST["firstname"], FILTER_SANITIZE_STRING);
+ 		if (isset($_POST["lastname"])) $name = $name." ".filter_var($_POST["lastname"], FILTER_SANITIZE_STRING);
+		$user = new User($name, $username, filter_var($_POST["password"], FILTER_SANITIZE_STRING));
 		$userId = $userManager->createUser($user);
 		if ($userId) {// if creation was successful
 			$_SESSION["currentUsername"] = $user->getUsername();

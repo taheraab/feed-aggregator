@@ -9,22 +9,15 @@ if (!isset($_SESSION["currentUserId"])) {
 	header("Location: ".createRedirectURL("login.php"));
 	exit;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	// Received a new subscription request
-	if (isset($_POST["url"])) {
-		$folderId = filter_var($_POST["folderId"], FILTER_SANITIZE_NUMBER_INT);
-		$feedParser = new FeedParser();
-		$feedManager = new FeedManager();
-		$feed = $feedParser->parseFeed(htmlspecialchars($_POST["url"]));	
-		if ($feed) {
-			if(!$feedManager->createFeed($_SESSION["currentUserId"], $folderId, $feed)) {
-				$newSubsErrMsg = "Couldn't create feed, try again";
-			}
-		}else {
-			$newSubsErrMsg = "Couldn't parse feed, try again";
-		}
 
-	}
+if (isset($_SESSION["subsErrMsg"])) {
+	$subsErrMsg = $_SESSION["subsErrMsg"];
+	unset($_SESSION["subsErrMsg"]);
+}
+
+if (isset($_SESSION["unsubscribeErrMsg"])) {
+	$unsubscribeErrMsg = $_SESSION["unsubscribeErrMsg"];
+	unset($_SESSION["unsubscribeErrMsg"]);
 }
 ?>
 <!DOCTYPE html>
@@ -42,9 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<?php require_once "includes/header.php"; ?>
 	<div id="toolbar">
 		<div>
-			<?php if (isset($newSubsErrMsg)) echo "<p class=\"errMsg\"> $newSubsErrMsg </p>"; ?>
+			<div class="errMsg"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
 			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
-			<form class="hidden" id="subsForm" method="post" action="index.php" onsubmit="setFolderId($(this))">
+			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" onsubmit="setFolderId($(this))" >
 				<input type='hidden' name='folderId' />
 				Atom/RSS Link: <br /><input type="url" name="url" />
 				<input type="submit" value="Submit" />
@@ -57,10 +50,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			<input type="radio" onchange= "filter= 'read'; filterView();" name = "filter"  >Read</input>
 		</div>
 		<div id="unsubscribe">
-			<form method="post" action="index.php" onsubmit="unsubscribe()">
+			<form method="post" action="manage_feeds.php?unsubscribeFeed" 
+				onsubmit="$(this).find('input[name=\'feedId\']').val(myFeeds[activeFeedIndex].id);" >
 				<input type="hidden" name="feedId" ></input>
 				<input type="submit" value= "Unsubscribe" ></input>
 			</form>
+			<span class="errMsg"><?php if (isset($unsubscribeErrMsg)) echo $unsubscribeErrMsg ?></span>
 		</div>
 		<div id="settingsMenu">
 			<button type="button" onclick = "$(this).next().toggleClass('hidden');"> </button>
@@ -77,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		<nav>
 			<p><a href="index.php"> Home </a></p>
 			<ul>
-				<li id="allItems" onclick = "setActiveFeed(-1, $(this).parent());"> <span> All Items </span> 
+				<li id="allItems" onclick = "setActiveFeed(-1, $(this));"> <span> All Items </span> 
 					<span></span></li><br />
 				<li id="subscriptions" ><div onclick="$(this).parent().toggleClass('collapsed');"> <span ></span><span>Subscriptions</span></div>
 					<img id="newFolder" src="resources/new_folder_icon.png" onclick="createFolder();" /> 

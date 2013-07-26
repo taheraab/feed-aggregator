@@ -18,6 +18,7 @@ class FolderManager extends DBManager{
 	// Create a new folder
 	// Returns id for new folder on success, false on failure
 	public function createFolder($userId, $name) {
+		if (empty($name)) return false;
 		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("INSERT INTO Folder (name, user_id) VALUES (:name, :userId)");
@@ -60,15 +61,64 @@ class FolderManager extends DBManager{
 			$stmt = $this->dbh->prepare("SELECT id, name FROM Folder WHERE user_id = :userId");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
 			if (!$this->execQuery($stmt, "getFolders: Get folders for a given user")) return false;
- 			if ($folders = $stmt->fetchAll(PDO::FETCH_CLASS, "Folder")) {
-				return $folders;
-			}
+ 			return $stmt->fetchAll(PDO::FETCH_CLASS, "Folder");
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FolderManager::getFolders: ".$e->getMessage(), 0);
 		}
 		return false;
 
 
+	}
+
+	// Delete a folder, associate all it's feeds with the root folder
+	// Returns true on success, false on failure
+	public function deleteFolder($userId, $folderId) {
+        if ($this->dbh == null) $this->connectToDB();
+        try {
+            $this->dbh->beginTransaction();
+			// First get root id
+            $stmt = $this->dbh->prepare("SELECT id FROM Folder WHERE user_id = :userId AND name = 'root'");
+            $stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+            if(!$this->execQuery($stmt, "deleteFolder: get root id", true)) return false;
+            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+				$rootId = $row["id"];
+				$stmt = $this->dbh->prepare("SELECT feed_id FROM UserFeedRel WHERE folder_id = :folderId");
+           		$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
+				if (!$this->execQuery($stmt, "deleteFolder: Get feed ids for given folder", true)) return false;
+            	if ($feedIds = $stmt->fetchAll(PDO::FETCH_COLUMN, 0)) { 
+					$stmt = $this->dbh->prepare("UPDATE UserFeedRel SET folder_id = ".$rootId." WHERE feed_id IN (".implode(",", $feedIds).")");
+					if (!$this->execQuery($stmt, "deleteFolder: Move feeds to root", true)) return false; 
+				}
+				$stmt = $this->dbh->prepare("DELETE FROM Folder WHERE id = :folderId");
+              	$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
+            	if ($this->execQuery($stmt, "deleteFolder: Delete folder", true)) {
+                	$this->dbh->commit();
+                	return true;
+               	 }
+				
+            }
+
+        } catch (PDOException $e) {
+            error_log("FeedAggregator::FolderManager::deleteFolder: ".$e->getMessage(), 0);
+        }
+        return false;
+	}
+
+	
+	// rename folder 
+	//Returns true on success, false on failure
+	public function renameFolder($userId, $folderId, $newName) {
+		if (!strcasecmp($newName, "root") || empty($newName)) return false; // do not rename
+		if ($this->folderExists($userId, $newName)) return false; // keep folder names unique
+		try {
+			$stmt = $this->dbh->prepare("UPDATE Folder SET name = :newName WHERE id = :folderId");
+			$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
+			$stmt->bindValue(":newName", $newName, PDO::PARAM_STR);
+			return $this->execQuery($stmt, "renameFolder: rename folder");
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FolderManager::renameFolder: ".$e->getMessage(), 0);
+		}
+		return false;
 	}
 	
 }

@@ -5,10 +5,10 @@ session_start();
 $userManager = new UserManager();
 $errMsg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	$username = htmlspecialchars($_POST["username"]);
+	$username = filter_var($_POST["username"], FILTER_SANITIZE_STRING);
 	$userId = $userManager->userExists($username);
 	if ($userId) {
-		$password = htmlspecialchars($_POST["password"]);
+		$password = filter_var($_POST["password"], FILTER_SANITIZE_STRING);
 		if($userManager->authenticate($userId, $password)) {
 			// if authentication succeeds, set the current_user in session
 			$_SESSION["currentUsername"] = $username;
@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	}else $errMsg =  "<p> ERROR: Username doesn't exist, please try again </p>";
 }
 if (isset($_SESSION["currentUserId"])) {
-	if (isset($_GET["logout"]) && htmlspecialchars($_GET["logout"])) {
+	if (isset($_GET["logout"])) {
 		unset($_SESSION["currentUsername"]);
 		unset($_SESSION["currentUserId"]);
 	} else {

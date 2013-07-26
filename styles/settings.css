@@ -4,6 +4,7 @@
 	margin-left: 10px;
 }
 
+
 h3 {
 	display:inline;
 
@@ -51,23 +52,24 @@ img.delete {
 	-webkit-flex-flow: row nowrap;
 }
 
-#folderList > div {
-	width: 30%;
-}
 
 #folderList > div > *, #feedList > div > * {
 	margin-right: 1em;
 	margin-bottom: 0.5em;
 }
 
-#folderName {
-	width: 10em;
+#folderList > div .folderName {
+	width: 20em;
 	overflow-x: auto;
 }
 
-#feedName {
+#feedList > div .feedName {
 	width: 30em;
 	overflow-x: auto;
 
 }
 
+div.aggrMenu > form {
+	display: inline;
+
+}

@@ -71,8 +71,8 @@ class EntryManager extends DBManager{
 					$entry->title = stripslashes($entry->title);
 					$entry->content = stripslashes($entry->content);	
 				}
-				return $entries;
 			}
+			return $entries;
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::EntryManager::getEntries: ".$e->getMessage(), 0);
 		}

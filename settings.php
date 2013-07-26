@@ -8,7 +8,18 @@ if (!isset($_SESSION["currentUserId"])) {
 	header("Location: ".createRedirectURL("login.php"));
 	exit;
 }
+
+if (isset($_SESSION["subscriptionsErrMsg"])) {
+	$subscriptionsErrMsg = $_SESSION["subscriptionsErrMsg"];
+	unset($_SESSION["subscriptionsErrMsg"]);
+}
+
+if (isset($_SESSION["foldersErrMsg"])) {
+	$foldersErrMsg = $_SESSION["foldersErrMsg"];
+	unset($_SESSION["foldersErrMsg"]);
+}
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -29,24 +40,29 @@ if (!isset($_SESSION["currentUserId"])) {
 		</div>
 		<nav>
 			<ul>
-				<li onclick = "setActiveTab($(this), 'subscriptions');">Subscriptions</li>
-				<li onclick = "setActiveTab($(this), 'folders');">Folders</li>
-				<li onclick = "setActiveTab($(this), 'import');">Import/Export</li>
+				<li name="subscriptions" onclick = "setActiveTab($(this), 'subscriptions');">Subscriptions</li>
+				<li name="folders" onclick = "setActiveTab($(this), 'folders');">Folders</li>
+				<li name="import" onclick = "setActiveTab($(this), 'import');">Import/Export</li>
 			</ul>
 		</nav>
 		<article>
 			<section id="subscriptions" class="hidden">
 				<h4>Subscriptions</h4>
-				Select &nbsp; <input type="radio" name="selectFeeds" value="all">All</input>
-				<input type="radio" name="selectFeeds" value="none">None</input>&nbsp; &nbsp;
-				<button type="button">Unsubscribe</button> &nbsp; &nbsp;
-				<select id="actions" name="actions">
-					<option selected>Add to Folder</option>
-					<option value="new">New Folder</option>
-				</select><br />
+				<div class="aggrMenu">Select &nbsp; <input type="radio" name="selectFeeds" 
+					onclick="$('#feedList').find('input[type=\'checkbox\']').prop('checked', true);">All</input>
+				<input type="radio" name="selectFeeds" 
+					onclick="$('#feedList').find('input[type=\'checkbox\']').prop('checked', false);">None</input>&nbsp; &nbsp;
+				<form id="subscriptionsForm" action="manage_feeds.php" method="post">
+				<button onclick="unsubscribeFeeds();" type="button">Unsubscribe</button> &nbsp; &nbsp;
+				<select onchange="moveFeedsToFolder();" id="actions" name="folder">
+				</select></form>
+				<span class="errMsg"><?php if (isset($subscriptionsErrMsg)) echo $subscriptionsErrMsg; ?></span>
+				</div>
+				
 				<div id="feedList">
 					
 				</div>		
+				<form id="foldersForm" action="manage_feeds.php" method="post"></form>
 			</section>
 			<section id="import" class="hidden">
 				<h4>Import your subscriptions </h4>
@@ -56,9 +72,13 @@ if (!isset($_SESSION["currentUserId"])) {
 			</section>
 			<section id="folders" class="hidden">
 				<h4> Folders </h4>
-				Select &nbsp; <input type="radio" >All</input>
-				<input type="radio" name="selectFeeds" value="none">None</input>&emsp; &emsp;
-				<img class="delete" src="resources/delete_icon.png" /> 
+				<div class="aggrMenu" >Select &nbsp; <input type="radio" name="selectFolders" 
+					onclick="$('#folderList').find('input[type=\'checkbox\']').prop('checked', true);">All</input>
+				<input type="radio" name="selectFolders" 
+					onclick="$('#folderList').find('input[type=\'checkbox\']').prop('checked', false);">None</input>&nbsp; &nbsp;
+				<img class="delete" onclick="deleteFolders();" src="resources/delete_icon.png" ></img> 
+				<span class="errMsg"><?php if (isset($foldersErrMsg)) echo $foldersErrMsg; ?></span>
+				</div>
 				<div id="folderList">
 
 				</div> 

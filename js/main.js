@@ -1,6 +1,4 @@
 var myFeeds = [];
-var activeFeedId = 0;
-var activeEntryId = 0;
 var $activeEntry = null; // DOM object representing active entry
 var $activeFeed = null; // DOM object representing active feed
 var $activeFolder = null;
