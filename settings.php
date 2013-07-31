@@ -66,9 +66,14 @@ if (isset($_SESSION["foldersErrMsg"])) {
 			</section>
 			<section id="import" class="hidden">
 				<h4>Import your subscriptions </h4>
-				<form method="post" action="settings.php">
-				<label for="subscriptionFile">Select an OPML file </label><input type="file" name="subscriptionFile"> </input> <br />
+				<iframe seamless name="errMsg"></iframe>
+				<form enctype="multipart/form-data" method="post" action="import_export.php" target="errMsg" 
+					onsubmit="$(this).find('input[name=\'rootFolderId\']').val(rootId); ">
+				<label for="subscriptionsFile">Select an OPML file </label>
+					<input type="file" accept="application/xml" name="subscriptionsFile"> </input> <br />
 				<input type="submit" value="Upload"></input>
+				<input type="hidden" name="rootFolderId" > </input>
+				</form>
 			</section>
 			<section id="folders" class="hidden">
 				<h4> Folders </h4>

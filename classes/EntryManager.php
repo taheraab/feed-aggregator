@@ -94,6 +94,7 @@ class EntryManager extends DBManager{
 			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
 			if ($this->execQuery($stmt, "insertUserEntryRelRecs: Adding new records in UserEntryRel",true)) return true;
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::EntryManager::insertUserEntryRelRecs: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -149,6 +150,7 @@ class EntryManager extends DBManager{
 					return $entryId;
 			}
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::EntryManager::insertEntryRec: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -173,6 +175,7 @@ class EntryManager extends DBManager{
 				if ($this->execQuery($stmt, "updateEntryRec: Update UserentryRel", true)) return true;
 			}
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::EntryManager::updateEntryRec: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -199,6 +202,7 @@ class EntryManager extends DBManager{
 			$lastEntryId = $this->dbh->lastInsertId();
 			if ($this->insertUserEntryRelRecs($userId, $feedId)) return $lastEntryId;	
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::EntryManager::insertEntryRecs: ".$e->getMessage(), 0);
 		}
 		return false;

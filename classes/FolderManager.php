@@ -27,6 +27,7 @@ class FolderManager extends DBManager{
 			if (!$this->execQuery($stmt, "createFolder: create a new folder for a given user", true)) return false;
 			return $this->dbh->lastInsertId();
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::FolderManager::createFolder: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -99,6 +100,7 @@ class FolderManager extends DBManager{
             }
 
         } catch (PDOException $e) {
+			$this->dbh->rollBack();
             error_log("FeedAggregator::FolderManager::deleteFolder: ".$e->getMessage(), 0);
         }
         return false;

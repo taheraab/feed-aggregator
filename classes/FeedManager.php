@@ -148,9 +148,9 @@ class FeedManager extends DBManager{
 				if(!$this->updateFeedRec($feed)) return false;
 				// Now check if any entry is modified or new entries are added
 				$stmt = $this->dbh->prepare("SELECT id, updated FROM Entry WHERE entryId = :entryId AND feed_id = :feed_id");
-				$stmt->bindValue(":entryid", $entry->entryId, PDO::PARAM_STR);
-				$stmt->bindValue(":feed_id", (int)$feed->id, PDO::PARAM_INT);
 				foreach ($feed->entries as $entry) {
+					$stmt->bindValue(":entryId", $entry->entryId, PDO::PARAM_STR);
+					$stmt->bindValue(":feed_id", (int)$feed->id, PDO::PARAM_INT);
 					// Check if this is a new entry
 					if (!$this->execQuery($stmt, "updateFeed: Check if entry s present", true)) return false;
 					if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -180,7 +180,8 @@ class FeedManager extends DBManager{
 			$this->dbh->commit();
 			return true;
 		} catch (PDOException $e) {
-			error_log("FeedAggregator::FeedManager::createFeed: ".$e->getMessage(), 0);
+			$this->dbh->rollBack();
+			error_log("FeedAggregator::FeedManager::updateFeed: ".$e->getMessage(), 0);
 		}
 		return false;
 	}
@@ -209,6 +210,7 @@ class FeedManager extends DBManager{
 				if($this->insertUserFeedRelRec($userId, $folderId, $feedId)) return $feedId;
 			}
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::FeedManager::insertFeedRec ".$e->getMessage(), 0);
 		}
 		return false;
@@ -226,6 +228,7 @@ class FeedManager extends DBManager{
 			$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
 			if ($this->execQuery($stmt, "insertUserFeedRelRec: Inserting new UseFeedRel record", true)) return true;
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::FeedManager::insertUserFeedRelRec: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -254,6 +257,7 @@ class FeedManager extends DBManager{
 				 return true;
 			}
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::FeedManager::updateFeedRec: ".$e->getMessage(), 0);
 		}
 		return false;
@@ -299,6 +303,7 @@ class FeedManager extends DBManager{
 
 			}
 		} catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::FeedManager::unsubscribeFeed: ".$e->getMessage(), 0);
 		}
 		return false;

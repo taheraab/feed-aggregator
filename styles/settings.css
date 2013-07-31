@@ -26,9 +26,9 @@ nav li {
 }
 
 nav li.active {
-	color: rgb(255, 0, 0);
+	color: rgb(0, 0, 255);
 	background-color: rgb(255, 255, 255);
-	border-top: 2px solid rgb(255, 0, 0);
+	border-top: 2px solid rgb(0, 0, 255);
 }
 
 img.delete {
@@ -72,4 +72,9 @@ img.delete {
 div.aggrMenu > form {
 	display: inline;
 
+}
+
+iframe[name='errMsg'] {
+/*	width: 30em;
+	height: 1.5em;*/
 }

@@ -50,12 +50,10 @@ class FeedParser {
 					case "subtitle":
 						$elmName = $this->xmlReader->name;
 						if ($elmName == "id") $elmName = "feedId";
-						$this->xmlReader->read(); //move to the containing text node
-						$feed->$elmName = $this->xmlReader->value;
+						$feed->$elmName = $this->getElementText();
 						break;
 					case "updated":
-						$this->xmlReader->read();
-						$date = new DateTime($this->xmlReader->value);
+						$date = new DateTime($this->getElementText());
 						if ($date) $feed->updated = $date->getTimestamp();
 						break;
 					case "link":
@@ -66,8 +64,8 @@ class FeedParser {
 						do {
 							$this->xmlReader->read();
 							if (($this->xmlReader->nodeType == XMLReader::ELEMENT) && ($this->xmlReader->name == "name")) {
-								$this->xmlReader->read();
-								$feed->authors = empty($feed->authors) ? $this->xmlReader->value : $feed->authors.", ".$this->xmlReader->value;
+								$value = $this->getElementText();
+								$feed->authors = empty($feed->authors) ? $value : $feed->authors.", ".$value;
 							}
 						}while ($this->xmlReader->name != "author");
 						break;
@@ -88,20 +86,18 @@ class FeedParser {
 	private function parseEntryTag() {
 		$entry= new Entry();
 		while ($this->xmlReader->read()) {
-			if ($this->xmlReader->name == "entry") break; // reached end of entry
+			if ($this->xmlReader->nodeType == XMLReader::END_ELEMENT && $this->xmlReader->name == "entry") break; // reached end of entry
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
 				$elmName = $this->xmlReader->name;
 				switch ($this->xmlReader->name) {
 					case "id":
 					case "title":
 						if ($elmName == "id") $elmName = "entryId";
-						$this->xmlReader->read(); //move to the containing text node
-						$entry->$elmName = $this->xmlReader->value;
+						$entry->$elmName = $this->getElementText();
 						break;
 					case "updated":
 					case "published":
-						$this->xmlReader->read();
-						$date = new DateTime($this->xmlReader->value);
+						$date = new DateTime($this->getElementText());
 						if ($date) $entry->$elmName = $date->getTimestamp();
 						break;
 					case "content":
@@ -112,8 +108,7 @@ class FeedParser {
 							// if contentType is not text, html or xhtml skip this entry (Not supported)
 							if (($contentType != "text") && ($contentType != "html") && ($contentType != "xhtml")) $skipEntry = true;
 						}
-						$this->xmlReader->read(); //move to the containing text node
-						if ($this->xmlReader->hasValue) $entry->content = $this->xmlReader->value;
+						$entry->content = $this->getElementText();
 						break;
 					case "link":
 						if ($this->xmlReader->getAttribute("rel") == "alternate") $entry->alternateLink = $this->xmlReader->getAttribute("href");
@@ -122,8 +117,8 @@ class FeedParser {
 						do {
 							$this->xmlReader->read();
 							if (($this->xmlReader->nodeType == XMLReader::ELEMENT) && ($this->xmlReader->name == "name")) {
-								$this->xmlReader->read();
-								$entry->authors = empty($entry->authors) ? $this->xmlReader->value : $entry->authors.", ".$this->xmlReader->value;
+								$value = $this->getElementText();
+								$entry->authors = empty($entry->authors) ? $value : $entry->authors.", ".$value;
 							}
 						}while ($this->xmlReader->name != "author");
 						break;
@@ -142,30 +137,23 @@ class FeedParser {
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
 				switch ($this->xmlReader->name) {
 					case "link": // maps to id and alternateLink 
-						$this->xmlReader->read();
-						$feed->feedId = $feed->alternateLink = $this->xmlReader->value;
+						$feed->feedId = $feed->alternateLink = $this->getElementText();
 						break;
 					case "title": // maps to title
-						$this->xmlReader->read();
-						$feed->title = $this->xmlReader->value;
+						$feed->title = $this->getElementText();
 						break;
 					case "description": //maps to subtitle
-						$this->xmlReader->read(); //move to the containing text node
-						if ($this->xmlReader->nodeType != XMLReader::TEXT) $this->moveToCdataNode(); // if not text, it must be CDATA
-						$feed->subtitle = $this->xmlReader->value;
+						$feed->subtitle = $this->getElementText();
 						break;
 					case "lastBuildDate": //maps to updated in both feed and entry
-						$this->xmlReader->read();
-						$date = new DateTime($this->xmlReader->value);
+						$date = new DateTime($this->getElementText());
 						if ($date) $lastBuildDate = $feed->updated = $date->getTimestamp();
 						break;
 					case "managingEditor": //maps to author
-						$this->xmlReader->read();
-						$feed->authors = $this->xmlReader->value;
+						$feed->authors = $this->getElementText();
 						break;
 					case "pubDate": // maps to updated if not already set
-						$this->xmlReader->read();
-						$date = new DateTime($this->xmlReader->value);
+						$date = new DateTime($this->getElementText());
 						if ($date) $pubDate = $date->getTimestamp();
 						break;
 					case "item": //maps to entry
@@ -210,30 +198,23 @@ class FeedParser {
 			if ($this->xmlReader->nodeType == XMLReader::ELEMENT) {
 				switch ($this->xmlReader->name) {
 					case "guid": //maps to Id
-						$this->xmlReader->read();
-						$entry->entryId = $this->xmlReader->value;
+						$entry->entryId = $this->getElementText();
 						break;
 					case "title": //maps to title
-						$this->xmlReader->read();
-						$entry->title = $this->xmlReader->value;
+						$entry->title = $this->getElementText();
 						break;
 					case "pubDate": //maps to published
-						$this->xmlReader->read();
-						$date = new DateTime($this->xmlReader->value);
+						$date = new DateTime($this->getElementText());
 						if ($date) $entry->updated= $entry->published = $date->getTimestamp();
 						break;
 					case "description": //maps to content
-						$this->xmlReader->read();
-						if ($this->xmlReader->nodeType != XMLReader::TEXT) $this->moveToCdataNode(); // if not text, it must be CDATA
-						$entry->content = $this->xmlReader->value;
+						$entry->content = $this->getElementText();
 						break;
 					case "link": //maps to alternateLink
-						$this->xmlReader->read();
-						$entry->alternateLink = $this->xmlReader->value;
+						$entry->alternateLink = $this->getElementText();
 						break;
 					case "author":
-						$this->xmlReader->read();
-						$entry->authors = $this->xmlReader->value;
+						$entry->authors = $this->getElementText();
 						break;
 				}			
 			
@@ -242,11 +223,28 @@ class FeedParser {
 	return $entry;
 	}
 
-	private function moveToCdataNode() {
-		while ($this->xmlReader->nodeType != XMLReader::CDATA) 
-			$this->xmlReader->read();
-	}
 
+	// Gets the text contents of a leaf element (an element without child elements)
+	private function getElementText() {
+		$value = "";
+		$name = $this->xmlReader->name;
+		if (!$this->xmlReader->isEmptyElement) { 
+			$this->xmlReader->read();
+			if ($this->xmlReader->nodeType == XMLReader::TEXT) {
+				$value = $this->xmlReader->value;
+			}else {
+				//Check if there's a CDATA
+				while($this->xmlReader->nodeType != XMLReader::CDATA) {
+					if ($this->xmlReader->nodeType == XMLReader::END_ELEMENT && $this->xmlReader->name == $name) break; 
+					if (!$this->xmlReader->read()) break;
+				}
+				if ($this->xmlReader->nodeType == XMLReader::CDATA) 
+					$value = $this->xmlReader->value;
+
+			}
+		}
+		return $value;
+	}
 
 	// Sanitize feed for safe database insertion and html display
 	private function sanitizeFeed(Feed $feed) {
@@ -274,11 +272,11 @@ class FeedParser {
 	
 }
 /*
-include_once "FeedManager.php";
+//include_once "FeedManager.php";
 
 $p = new FeedParser();
 
-$feed = $p->parseFeed("http://feeds.feedburner.com/tedblog");
+$feed = $p->parseFeed("http://feeds.feedburner.com/youthcurryblogspotcom");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
 var_dump($feed);

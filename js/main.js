@@ -8,6 +8,7 @@ var lastLoadedEntryId = 0;
 var filter = "all";
 var activeFolderId = 0;
 var rootId;
+var getFeedsTimerId;
 
 function EntryObj(id, status, type) {
 	this.id = id;
@@ -21,11 +22,16 @@ $(document).ready(function(){
 	loadFolders();
 	$("#entryList").scroll(setActiveEntry);
 	setUpdateTimer();
+	setGetFeedsTimer();
 });
 
 function setUpdateTimer() {
-	window.setTimeout(updateEntries(), 60000); // save updated entries after 60 secs 
+	window.setInterval(updateEntries, 60000); // save updated entries after 60 secs 
 
+}
+
+function setGetFeedsTimer() {
+	getFeedsTimerId = window.setInterval(loadFeeds, 30000); //every 30 secs, refresh feed list
 }
 
 // Load folders into navigation menu
@@ -59,6 +65,8 @@ function loadFeeds() {
 		var i;
 		var $feedList = $("#feedList");
 		var allItemsUnreadCount = 0;
+		var feedExists = false;
+		var newFeed = false;
 		for (i = 0; i < myFeeds.length; i++) { 
 			var titleClass = "";
 			var unreadCount = "";
@@ -67,13 +75,23 @@ function loadFeeds() {
 				unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
 				titleClass = "class = 'unread'";
 			}
-		
-			var content = "<li class='feed' onclick = 'setActiveFeed(" + i + ", $(this));'><img src = '" + 
-				myFeeds[i].alternateLink + "/favicon.ico'></img> <span id='feed" + myFeeds[i].id + "' " + titleClass + "  >" + 
-				myFeeds[i].title + " </span><span>" + unreadCount + "</span></li>";
-			if (myFeeds[i].folder_id == rootId) $feedList.append(content); 
-			else {
-				$feedList.find("#folder" + myFeeds[i].folder_id).append(content);
+			// Check if feed exists
+			var $feed = $("#Feed" + myFeeds[i].id);	
+			if ($feed.length) {
+				feedExists = true;
+				if (parseInt(myFeeds[i].numUnreadEntries)) {
+					$feed.find("span[name='title']").addClass("unread");
+					$feed.find("span:last-child").text(unreadCount);
+				}
+			} else {
+				newFeed = true;
+				var content = "<li id='Feed" + myFeeds[i].id + "' class='feed' onclick = 'setActiveFeed(" + i + ", $(this));'><img src = '" + 
+					myFeeds[i].alternateLink + "/favicon.ico'></img> <span name='title'" + titleClass + "  >" + 
+					myFeeds[i].title + " </span><span>" + unreadCount + "</span></li>";
+				if (myFeeds[i].folder_id == rootId) $feedList.append(content); 
+				else {
+					$feedList.find("#folder" + myFeeds[i].folder_id).append(content);
+				}
 			}
 		}
 		//set unread count for All Items link
@@ -83,8 +101,11 @@ function loadFeeds() {
 			$allItems.find("span:last-child").text("(" + allItemsUnreadCount + ")");
 		}
 
+		// If no more new feeds were added, clear GetFeedsTimer
+		window.clearInterval(getFeedsTimerId);
 		// Set the first feed as active feed	
-		$("#feedList li.feed").first().click();
+		if (!feedExists) 
+			$("#feedList li.feed").first().click();
 	});
 }
 

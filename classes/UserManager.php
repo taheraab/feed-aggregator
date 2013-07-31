@@ -75,6 +75,7 @@ class UserManager extends DBManager {
 				}
 			}	
 		}catch (PDOException $e) {
+			$this->dbh->rollBack();
 			error_log("FeedAggregator::UserManager::createUser: ".$e->getMessage(),0);
 		}
 		return false;
