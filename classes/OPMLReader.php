@@ -3,8 +3,11 @@
 class OPMLReader {
 	private $xmlReader = null;
 
+	public function __construct() {
+		$this->xmlReader = new XMLReader();
+	}
+
 	public function parseFile($filename) {
-		if ($this->xmlReader == null) $this->xmlReader = new XMLReader();
 		if ($this->xmlReader->open($filename)) {
 			// Look for opml tag
 			$this->xmlReader->read();
@@ -16,6 +19,8 @@ class OPMLReader {
 				}
 			} 
 
+		}else {
+			error_log("FeedAggregator::OPMLReader::parseFile: Couldn't open file ".$filename, 0);
 		}
 		return false;
 	}
@@ -54,18 +59,6 @@ class OPMLReader {
 	}
 
 }
-/*
-$parser = new OPMLReader();
-var_dump($parser->parseFile("/home/tahera/subscriptions.xml"));
-
-*/
-
-
-
-
-
-
-
 
 
 ?>

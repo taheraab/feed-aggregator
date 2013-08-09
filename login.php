@@ -29,7 +29,6 @@ if (isset($_SESSION["currentUserId"])) {
 }
 
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>

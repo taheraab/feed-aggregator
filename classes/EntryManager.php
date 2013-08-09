@@ -240,4 +240,3 @@ class EntryManager extends DBManager{
 
 
 ?>
-

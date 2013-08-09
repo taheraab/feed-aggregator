@@ -1,7 +1,7 @@
 <?php
 include_once "classes/OPMLReader.php";
 include_once "classes/FeedManager.php";
-//include_once "classes/OPMLWriter.php";
+include_once "classes/OPMLWriter.php";
 
 session_start();
 if (!isset($_SESSION["currentUserId"])) {
@@ -40,25 +40,20 @@ if (isset($_FILES["subscriptionsFile"])) {
 	}
 	$msg = file_get_contents("log/importLog".$_SESSION["currentUserId"]);
 
-}/*else if (isset($_REQUEST["export"])) {
+}else if (isset($_REQUEST["export"])) {
 	$feedManager = new FeedManager();
+	$folderManager = new FolderManager();
 	$OPMLWriter = new OPMLWriter();
-	if ($feeds = $feedManager->getFeedsForExport($_SESSION["currentUserId"])){
-		$filename = "files/export_subscriptions".$_SESSION["currentUserId"];
-		if ($OPMLWriter->exportToFile($feeds, $filename)) {
-			// File is successfully generated
-			header("Content-type: application/xml");
-			echo file_get_contents($filename);
-			exit;
-		}else 
-			$errMsg = "Error generating OPML file";
-	}else 
-		$errMsg = "Error getting subscription info";
-
-}*/
+	$filename = "files/export_subscriptions".$_SESSION["currentUserId"].".xml";
+	if ($OPMLWriter->exportFeedsToFile($_SESSION["currentUserId"], $filename)) {
+		// File is successfully generated
+		header("Content-type: application/xml");
+		echo file_get_contents($filename);
+		exit;
+	}else $errMsg = "Error generating OPML file";
+}
 
 ?>
-
 <html>
 <head>
 <style type="text/css">

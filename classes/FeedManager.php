@@ -21,13 +21,13 @@ class FeedManager extends DBManager{
 	
 	//Get Feed recs from a folder
 	// Returns a list of Feed objects on success, false on failure
-	public function getFeedsInFolder($folderId) {
-	if ($this->dbh == null) $this->connectToDB();
+	public function getFeedsFromFolder($folderId) {
+		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT Feed.title, Feed.selfLink, Feed.alternateLink FROM UserFeedRel INNER JOIN Feed ".
 				"ON UserFeedRel.feed_id = Feed.id WHERE UserFeedRel.folder_id = :folderId");
 			$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
-			if (!$this->execQuery($stmt, "getFeedsInFolder: Get feed Recs from a folder")) return false;
+			if (!$this->execQuery($stmt, "getFeedsFromFolder: Get feed Recs from a folder")) return false;
  			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) {
 				// Unescape title, subtitle
 				foreach ($feeds as $feed) {
@@ -36,7 +36,7 @@ class FeedManager extends DBManager{
 			}
 			return $feeds;
 		} catch (PDOException $e) {
-			error_log("FeedAggregator::FeedManager::getFeedsInFolder: ".$e->getMessage(), 0);
+			error_log("FeedAggregator::FeedManager::getFeedsFromFolder: ".$e->getMessage(), 0);
 		}
 		return false;
 	}
@@ -334,4 +334,3 @@ class FeedManager extends DBManager{
 
 
 ?>
-
