@@ -75,6 +75,6 @@ div.aggrMenu > form {
 }
 
 iframe[name='errMsg'] {
-/*	width: 30em;
-	height: 1.5em;*/
+	width: 50em;
+/*	height: 1.5em;*/
 }

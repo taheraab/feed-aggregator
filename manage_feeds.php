@@ -23,6 +23,11 @@ if (isset($_GET["getFeeds"])) {
 	$lastLoadedEntryId = filter_var($_GET["lastLoadedEntryId"], FILTER_SANITIZE_NUMBER_INT);
 	$result = $entryManager->getEntries($_SESSION["currentUserId"], $feedId, $entryPageSize, $lastLoadedEntryId);
 
+}else if (isset($_GET["getNumUnreadEntries"])) {
+	$entryManager = new EntryManager();
+	$feedId = filter_var($_GET["feedId"], FILTER_SANITIZE_NUMBER_INT);
+	$result = $entryManager->getNumUnreadEntries($_SESSION["currentUserId"], $feedId);
+
 }else if (isset($_REQUEST["updateEntries"])) {
 	$entryManager = new EntryManager();
 	$entries = json_decode($HTTP_RAW_POST_DATA, false, 3);

@@ -33,6 +33,30 @@ class EntryManager extends DBManager{
 		return false;
 	}
 
+	// Returns number of unread Entries for a given feed
+	// Returns total num of unread entries for all feeds if feedId = 0
+	// Returns false on failure
+	public function getNumUnreadEntries($userId, $feedId) {
+   		if ($this->dbh == null) $this->connectToDB();
+		try {
+ 			$query = "SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
+       			"Entry.id = UserEntryRel.entry_id WHERE UserEntryRel.user_id = :userId AND ".
+ 		   		"(UserEntryRel.status = 'unread' OR UserEntryRel.status = 'new')";
+			if ($feedId) $query = $query." AND Entry.feed_id = :feedId";
+			$stmt = $this->dbh->prepare($query);
+            $stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
+            if ($feedId) $stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
+            if ($this->execQuery($stmt, "getNumUnreadEntries: Get the unread entry count")) {
+            	if ($result = $stmt->fetch(PDO::FETCH_NUM)) return $result[0];
+    		}
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::EntryManager::getNumUnreadEntries: ".$e->getMessage(), 0);
+		}
+		return false;
+
+	}
+
+
 	// Returns requested number of entries with ids less than the lastLoadedEntryId for a given feed.
 	// Returns all entries if feedId = 0;
 	// Returns List of Entry objects on success, false on failure
@@ -188,7 +212,9 @@ class EntryManager extends DBManager{
 		try {
 			$stmt = $this->dbh->prepare("INSERT INTO Entry (entryId, title, updated, authors, alternateLink, contentType, content, feed_id) ".
 				"VALUES (:entryId, :title, :updated, :authors, :alternateLink, :contentType, :content, :feed_id)");
-			foreach ($entries as $entry) {
+			$n = count($entries);
+			for ($i = $n-1; $i >= 0; $i--) {
+				$entry = $entries[$i];
 				$stmt->bindValue(":entryId", $entry->entryId, PDO::PARAM_STR);
 				$stmt->bindValue(":title", addslashes($entry->title), PDO::PARAM_STR);
 				$stmt->bindValue(":updated", (int)$entry->updated, PDO::PARAM_INT);

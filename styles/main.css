@@ -11,7 +11,7 @@
 }
 
 #toolbar > div:first-child {
-	width: 300px;
+	min-width: 15em;
 }
 
 #subsForm {
@@ -143,7 +143,7 @@ nav > ul:first-child .unread {
 }
 
 #content > nav {
-	width: 200px;
+	min-width: 15em;
 	order: 1;
 	-webkit-order: 1;
 	height: 35em;

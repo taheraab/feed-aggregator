@@ -9,7 +9,7 @@ class UserManager extends DBManager {
 	
 	public function __construct() {
 		parent::__construct();
-		$folderManager = new FolderManager($this->dbh);
+		$this->folderManager = new FolderManager($this->dbh);
 	}
 
 	public function __destruct() {
@@ -63,13 +63,13 @@ class UserManager extends DBManager {
 		try {
 			$this->dbh->beginTransaction();
 			$stmt = $this->dbh->prepare("INSERT INTO User (name, username, password) VALUES (:name, :username, :password)");
-			$stmt->bindValue(":name", $name, PDO::PARAM_STR);
-			$stmt->bindValue(":username", $username, PDO::PARAM_STR);
-			$stmt->bindValue(":password", $password, PDO::PARAM_STR);
+			$stmt->bindValue(":name", $user->getName(), PDO::PARAM_STR);
+			$stmt->bindValue(":username", $user->getUsername(), PDO::PARAM_STR);
+			$stmt->bindValue(":password", $user->getPassword(), PDO::PARAM_STR);
 			if ($this->execQuery($stmt, "createUser: insert a new user record", true)) {
 				$userId = $this->dbh->lastInsertId();
 				// Insert a root folder record for this user
-				if ($this->foldManager->createFolder($userId, "root")) {
+				if ($this->folderManager->createFolder($userId, "root")) {
 					$this->dbh->commit();
 					return $userId;
 				}

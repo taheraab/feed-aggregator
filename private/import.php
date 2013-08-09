@@ -2,9 +2,9 @@
 include_once dirname(__FILE__)."/../classes/OPMLReader.php";
 include_once dirname(__FILE__)."/../classes/FeedManager.php";
 include_once dirname(__FILE__)."/../classes/FeedParser.php";
+include_once dirname(__FILE__)."/../classes/FolderManager.php";
 
 $userId = $argv[1];
-$rootFolderId = $argv[2];
 $filename = "files/import_subscriptions".$userId;
 
 $opmlReader = new OPMLReader();
@@ -12,17 +12,24 @@ $feedUrls = $opmlReader->parseFile($filename);
 if ($feedUrls) {
   $feedParser = new FeedParser();
   $feedManager = new FeedManager();
-  foreach ($feedUrls as $feedUrl) {
-		if ($feed = $feedParser->parseFeed($feedUrl)) {
-    	if (!$feedManager->createFeed($userId, $rootFolderId, $feed)) 
-				echo "Error subscribing to  ".$feedUrl;
-			else 
-				echo "Subscription successful for ".$feedUrl;
-    }else 
-			echo "Error parsing ".$feedUrl."\n";
-	}  
+  $folderManager = new FolderManager();
 
-}else 
-	echo "Error parsing subscriptions file ".$filename."\n";
+  echo "Importing...\n";
+  $errMsg = "";
+  foreach ($feedUrls as $folderName => $xmlUrls) {
+		$folderId = $folderManager->folderExists($userId, $folderName);
+		if (!$folderId) $folderId = $folderManager->createFolder($userId, $folderName); 
+		if ($folderId) {
+			foreach($xmlUrls as $xmlUrl) {
+				echo $folderName.":".$folderId.":";
+				if ($feed = $feedParser->parseFeed($xmlUrl)) {
+    				if (!$feedManager->createFeed($userId, $folderId, $feed)) $errMsg = "Error creating subscription, please try again";
+	  			}else $errMsg = "Invalid Atom or RSS xml";
+				echo $xmlUrl."   ".$errMsg."\n";
+			}
+		}else echo "Error creating folder: ".$folderName."\n";
+	}
+	echo "Import Complete\n";  
+}else echo "Error parsing subscriptions file (not a valid OPML file?): ".$filename."\n";
     
 ?>

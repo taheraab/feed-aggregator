@@ -18,6 +18,28 @@ class FeedManager extends DBManager{
 		parent::__destruct();
 
 	}
+	
+	//Get Feed recs from a folder
+	// Returns a list of Feed objects on success, false on failure
+	public function getFeedsInFolder($folderId) {
+	if ($this->dbh == null) $this->connectToDB();
+		try {
+			$stmt = $this->dbh->prepare("SELECT Feed.title, Feed.selfLink, Feed.alternateLink FROM UserFeedRel INNER JOIN Feed ".
+				"ON UserFeedRel.feed_id = Feed.id WHERE UserFeedRel.folder_id = :folderId");
+			$stmt->bindValue(":folderId", (int)$folderId, PDO::PARAM_INT);
+			if (!$this->execQuery($stmt, "getFeedsInFolder: Get feed Recs from a folder")) return false;
+ 			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) {
+				// Unescape title, subtitle
+				foreach ($feeds as $feed) {
+					$feed->title = stripslashes($feed->title);
+				}
+			}
+			return $feeds;
+		} catch (PDOException $e) {
+			error_log("FeedAggregator::FeedManager::getFeedsInFolder: ".$e->getMessage(), 0);
+		}
+		return false;
+	}
 
 	//Get Feed recs for folder organization on the Settings page
 	// Returns list of Feed objects on success, false on failure
@@ -29,12 +51,12 @@ class FeedManager extends DBManager{
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
 			if (!$this->execQuery($stmt, "getFeedsForSettings: Get feed Recs for folder organization")) return false;
  			if ($feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed")) {
-				// Unescape title, subtitle
+				// Unescape title and get folder name
 				foreach ($feeds as $feed) {
 					$feed->title = stripslashes($feed->title);
 				}
-				return $feeds;
 			}
+			return $feeds;
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::getFeedsForSettings: ".$e->getMessage(), 0);
 		}
@@ -59,15 +81,8 @@ class FeedManager extends DBManager{
 					$feed->title = stripslashes($feed->title);
 					$feed->subtitle = stripslashes($feed->subtitle);
 					// Get num of unread entry count for each feed
-					$stmt = $this->dbh->prepare("SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
-						"Entry.id = UserEntryRel.entry_id WHERE Entry.feed_id = :feedId AND UserEntryRel.user_id = :userId AND ".
-						"(UserEntryRel.status = 'unread' OR UserEntryRel.status = 'new')");
-					$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
-					$stmt->bindValue(":feedId", (int)$feed->id, PDO::PARAM_INT);
-					if (!$this->execQuery($stmt, "getFeeds: Get the unread entry count")) return false;
-					if ($result = $stmt->fetch(PDO::FETCH_NUM)) {
-						$feed->numUnreadEntries = $result[0];
-					}
+					$n = $this->entryManager->getNumUnreadEntries($userId, $feed->id);
+					if (is_string($n)) $feed->numUnreadEntries = $n;
 				}
 			}
 			return $feeds;
@@ -84,8 +99,7 @@ class FeedManager extends DBManager{
 			$stmt = $this->dbh->prepare("SELECT id, selfLink FROM Feed WHERE lastCheckedAt <= :lastCheckedAt");
 			$stmt->bindValue(":lastCheckedAt", $timestamp, PDO::PARAM_INT);
 			if ($this->execQuery($stmt, "getFeedsToUpdate: Get all feeds that must be checked for update")) {
- 				$feeds = $stmt->fetchAll(PDO::FETCH_CLASS, "Feed");
-				return $feeds;
+ 				return $stmt->fetchAll(PDO::FETCH_CLASS, "Feed");
 			}
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::getFeedsToUpdate: ".$e->getMessage(), 0);
@@ -128,14 +142,18 @@ class FeedManager extends DBManager{
 	}
 
 	// Update an existing feed, called when a new subscription is added for a user
-	// Returns true on success, false on failure
+	// Returns true on success, false on failure 
 	public function updateFeed($userId, $folderId, Feed $feed) {
 		if ($this->dbh == null) $this->connectToDB();
 		try {	
 			$this->dbh->beginTransaction();
-			if ($userId) { // if userId is given, then this is a new subscription
+			if ($userId) { // if userId is given, then this may be a new subscription
 				// Update UserFeedRel and UserEntryRel for the given user. This could be a new subscription
-				if(!$this->insertUserFeedRelRec($userId, $folderId, $feed->id, true)) return false; //ignore duplicates
+				if(!$this->insertUserFeedRelRec($userId, $folderId, $feed->id)) {
+					$this->dbh->beginTransaction(); // transaction has been rolled back in previous statement
+					// Change folder if this is not a new subscription
+					if (!$this->changeFolder($userId, $feed->id, $folderId)) return false;
+				}
 				if(!$this->entryManager->insertUserEntryRelRecs($userId, $feed->id, true)) return false; //ignore duplicates
 			}
 			// Check if feed updated value has changed 
@@ -148,7 +166,9 @@ class FeedManager extends DBManager{
 				if(!$this->updateFeedRec($feed)) return false;
 				// Now check if any entry is modified or new entries are added
 				$stmt = $this->dbh->prepare("SELECT id, updated FROM Entry WHERE entryId = :entryId AND feed_id = :feed_id");
-				foreach ($feed->entries as $entry) {
+				$n = count($feed->entries);
+				for ($i = $n-1; $i >= 0; $i--) {
+					$entry = $feed->entries[$i];
 					$stmt->bindValue(":entryId", $entry->entryId, PDO::PARAM_STR);
 					$stmt->bindValue(":feed_id", (int)$feed->id, PDO::PARAM_INT);
 					// Check if this is a new entry
@@ -168,7 +188,7 @@ class FeedManager extends DBManager{
 				}
 
 			} else {
-				// Feed doesn't need to be updated, just change lastCheckedAt value
+				// Feed doesn't need to be updated, just change lastCheckedAt value 
 				$stmt = $this->dbh->prepare("UPDATE Feed SET lastCheckedAt = :lastCheckedAt WHERE id = :id");
 				$now = new DateTime();
 				$stmt->bindValue(":lastCheckedAt", $now->getTimestamp(), PDO::PARAM_INT);
@@ -272,7 +292,7 @@ class FeedManager extends DBManager{
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
 			$stmt->bindValue(":feedId", (int)$feedId, PDO::PARAM_INT);
 			$stmt->bindValue(":newFolderId", (int)$newFolderId, PDO::PARAM_INT);
-			return $this->execQuery($stmt, "changeFolder: Change folder to which feed belongs");
+			return $this->execQuery($stmt, "changeFolder: Change folder to which feed belongs", true);
 		} catch (PDOException $e) {
 			error_log("FeedAggregator::FeedManager::changeFolder: ".$e->getMessage(), 0);
 		}

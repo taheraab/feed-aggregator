@@ -19,10 +19,12 @@ function EntryObj(id, status, type) {
 
 // Create the navigation menu
 $(document).ready(function(){
+	$("#unsubscribe input[type='submit']").prop("disabled", true);
 	loadFolders();
 	$("#entryList").scroll(setActiveEntry);
 	setUpdateTimer();
 	setGetFeedsTimer();
+
 });
 
 function setUpdateTimer() {
@@ -72,7 +74,8 @@ function loadFeeds() {
 			var unreadCount = "";
 			if (parseInt(myFeeds[i].numUnreadEntries)) {
 				allItemsUnreadCount += parseInt(myFeeds[i].numUnreadEntries);
-				unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
+				if (parseInt(myFeeds[i].numUnreadEntries) < 1000) unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
+				else unreadCount = "(1000+)";
 				titleClass = "class = 'unread'";
 			}
 			// Check if feed exists
@@ -81,28 +84,35 @@ function loadFeeds() {
 				feedExists = true;
 				if (parseInt(myFeeds[i].numUnreadEntries)) {
 					$feed.find("span[name='title']").addClass("unread");
-					$feed.find("span:last-child").text(unreadCount);
+					$unreadCountElm = $feed.find("span:last-child");
+					$unreadCountElm.data("unreadCount", myFeeds[i].numUnreadEntries);
+					$unreadCountElm.text(unreadCount);
 				}
 			} else {
 				newFeed = true;
 				var content = "<li id='Feed" + myFeeds[i].id + "' class='feed' onclick = 'setActiveFeed(" + i + ", $(this));'><img src = '" + 
 					myFeeds[i].alternateLink + "/favicon.ico'></img> <span name='title'" + titleClass + "  >" + 
-					myFeeds[i].title + " </span><span>" + unreadCount + "</span></li>";
+					myFeeds[i].title + " </span><span data-unread-count='" + myFeeds[i].numUnreadEntries + "' >" + unreadCount + "</span></li>";
 				if (myFeeds[i].folder_id == rootId) $feedList.append(content); 
 				else {
 					$feedList.find("#folder" + myFeeds[i].folder_id).append(content);
 				}
 			}
 		}
+		
+		
+		$allItems = $("#allItems");
+		$unreadCountElm = $allItems.find("span:last-child");
+		$unreadCountElm.data("unreadCount", allItemsUnreadCount);
 		//set unread count for All Items link
 		if (allItemsUnreadCount) {
-			$allItems = $("#allItems");
 			$allItems.find("span.first-child").toggleClass("unread");
-			$allItems.find("span:last-child").text("(" + allItemsUnreadCount + ")");
+			if (allItemsUnreadCount < 1000) $unreadCountElm.text("(" + allItemsUnreadCount + ")");
+			else $unreadCountElm.text("(1000+)");
 		}
 
 		// If no more new feeds were added, clear GetFeedsTimer
-		window.clearInterval(getFeedsTimerId);
+		if (!newFeed) window.clearInterval(getFeedsTimerId);
 		// Set the first feed as active feed	
 		if (!feedExists) 
 			$("#feedList li.feed").first().click();
@@ -148,13 +158,21 @@ function loadEntries() {
 	var feedId = (activeFeedIndex != -1)? myFeeds[activeFeedIndex].id : 0;	
 	//Remove section with id = more from entryList
 	$("section[id='more']").remove();
+	if ($activeEntry == null) { //if this is the first page, get unread count
+		// Get num of unread entries for this feed
+		$.getJSON("manage_feeds.php?getNumUnreadEntries&feedId=" + feedId, function(unreadCount) {
+			if (unreadCount !== false) {
+				// Set unread entry count for the active feed
+				updateUnreadCount("set", unreadCount);
+			}
+		});
+	}
 	$.getJSON("manage_feeds.php?getEntries&feedId=" + feedId + "&entryPageSize=" + entryPageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
 	 function(entries) {
 		if (!entries) {
 			$entryList.append("<section id='last'> No more Entries </section>");
 			return;
 		}
-		var unreadCount = 0;
 		for (var i = 0; i < entries.length; i++) { 
 			// filter entries before adding them
 			var hidden = "";
@@ -182,7 +200,6 @@ function loadEntries() {
 				"' onchange='setEntryStatus($(this));' " + checked + "  />" + 
 				"<label for='status'> Keep unread</label></div></section>";
 			$entryList.append(content);
-			if (entries[i].status == "unread" || entries[i].status == "new") ++unreadCount;
 		}
 		lastLoadedEntryId = entries[entries.length- 1].id;
 		if (entries.length < entryPageSize) {
@@ -196,11 +213,6 @@ function loadEntries() {
 			// This is the first page
 			$activeEntry = $("#entryList section:first-of-type");
 			$activeEntry.addClass("highlighted");
-			// Set unread entry count for the active feed
-			updateUnreadCount("set", unreadCount);
-		}else {
-			// Increment unread count
-			updateUnreadCount("increment", unreadCount);
 		}
 
 	});
@@ -229,7 +241,7 @@ function setActiveEntry() {
 					if ($statusElm.val() == "new") {
 						$statusElm.val("read");
 						// decrement unread count for active feed
-			    		updateUnreadCount("decrement", 1);
+			    		updateUnreadCount("decrement");
 						$activeEntry.addClass("updated");
 					}
 					$activeEntry = $nextEntry;
@@ -268,42 +280,53 @@ function setEntryStatus($elm) {
 	if ($elm.prop("checked")) {
 		$elm.val("unread"); 
 		// Increment unread count for active feed
-		updateUnreadCount("increment", 1);
+		updateUnreadCount("increment");
 	}else {
 		$elm.val("read");
-		updateUnreadCount("decrement", 1);
+		updateUnreadCount("decrement");
 	}
 	$elm.parent().parent().addClass("updated");
 }
 
 // Increments/Decrements/Sets unread count for active Feed element
-function updateUnreadCount(option, step) {
+function updateUnreadCount(option, value) {
+	if (typeof(value) === "undefined") value = 0;
+	console.log(option + " " + value);
+	value = parseInt(value);
 	var $spanElm = $activeFeed.find("span:last-child");
-	var countString = $spanElm.text(); 		
-	if (countString) {
-		var count = /\((\d+)\)/.exec(countString);
-		var c = parseInt(count[1]);
-		if(c) {
-			if (option == "decrement") {
-				c -= step;
-				if (c) 
-					$spanElm.text("(" + c + ")");
-				else {
-					$spanElm.text("");
-					$spanElm.prev().toggleClass("unread"); // remove unread style for the title
-				}
-			}else if (option == "increment") {
-				c += step;
-				$spanElm.text("(" + c + ")");
-			}else if (option == "set") {
-				if (step) $spanElm.text("(" + step + ")");
+	var count = parseInt($spanElm.data("unreadCount")); 		
+	console.log(count);
+	if (option == "decrement") {
+		if (count) {
+			count--;
+			if (count) 
+				$spanElm.text("(" + count + ")");
+			else {
+				$spanElm.text("");
+				$spanElm.prev().removeClass("unread"); // remove unread style for title
 			}
+			$spanElm.data("unreadCount", count);
 		}
-	}else if (option == "increment" || option == "set")  {
-		if (step) {
-			$spanElm.text("(" + step + ")");
-			$spanElm.prev().toggleClass("unread");
-		}	
+	}else if (option == "increment") {
+		if (!count) $spanElm.prev().addClass("unread"); // add unread style for title
+		count ++;
+		if (count < 1000) $spanElm.text("(" + count + ")");
+		else $spanElm.text("(1000+)");
+		$spanElm.data("unreadCount", count);
+	}else if (option == "set") {
+		if (value) {
+			if (value < 1000) $spanElm.text("(" + value + ")");
+			else $spanElm.text("(1000+)");
+		}else { 
+			$spanElm.text("");
+		}
+		if (value && !count) {
+			$spanElm.prev().addClass("unread");
+		}
+		if (!value && count) {
+			$spannElm.prev().removeclass("unread");
+		}
+		$spanElm.data("unreadCount", value);
 	}
 		
 }
