@@ -28,7 +28,6 @@ if (isset($_SESSION["foldersErrMsg"])) {
 	<link rel="stylesheet" href="styles/settings.css">
 	<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
 	<script src="js/settings.js"></script>
-	<script src="js/misc.js"></script>
 
 </head>
 <body>	

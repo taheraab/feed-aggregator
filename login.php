@@ -2,30 +2,15 @@
 include_once "classes/UserManager.php";
 // Get login info from session to check if user is already logged in
 session_start();
-$userManager = new UserManager();
-$errMsg = "";
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	$username = filter_var($_POST["username"], FILTER_SANITIZE_STRING);
-	$userId = $userManager->userExists($username);
-	if ($userId) {
-		$password = filter_var($_POST["password"], FILTER_SANITIZE_STRING);
-		if($userManager->authenticate($userId, $password)) {
-			// if authentication succeeds, set the current_user in session
-			$_SESSION["currentUsername"] = $username;
-			$_SESSION["currentUserId"] = $userId;
-		}else {
-			$errMsg =  "<p> ERROR: Incorrect password, please try again </p>";
-		}	
-	}else $errMsg =  "<p> ERROR: Username doesn't exist, please try again </p>";
+
+if (isset($_SESSION["loginErrMsg"])) {
+    $loginErrMsg = $_SESSION["loginErrMsg"];
+    unset($_SESSION["loginErrMsg"]);
 }
+
 if (isset($_SESSION["currentUserId"])) {
-	if (isset($_GET["logout"])) {
-		unset($_SESSION["currentUsername"]);
-		unset($_SESSION["currentUserId"]);
-	} else {
-		header("Location: ".createRedirectURL("index.php"));
-		exit;
-	}
+	header("Location: ".createRedirectURL("index.php"));
+	exit;
 }
 
 ?>
@@ -33,15 +18,39 @@ if (isset($_SESSION["currentUserId"])) {
 <html>
 <head>
 	<title> Login to FeedAggregator </title>
-<script src="js/misc.js"></script>
+<link rel="stylesheet" href="styles/user.css" >
+<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
+<script src="js/user.js"></script>
 </head>
 <body>
-	<?php echo $errMsg; ?>
-	<form method="post" action="login.php">	
-		Username: <input type="text" name="username" /><br>
-		Password: <input type="password" name="password" /><br>
-		<input type="submit" value="Submit" />
-	</form>
-	<p> New User? <a href="register.php"> Click here to register </a> </p>
+	<?php include_once ("includes/header.php"); ?>
+	<div class="errMsg"><?php if (isset($loginErrMsg)) echo $loginErrMsg; ?></div>
+	<div id="loginContent">
+		<section id="loginForm">
+			<form method="post" action="manage_user.php?login" >	
+				Username: <input type="text" name="username" required /><br>
+				Password: <input type="password" name="password" required  /><br>
+				<input type="submit" value="Submit" />
+			</form>
+			<div class="option"> New User? <span class="link" onclick="toggleActiveForm();"> Click here to register </span> </div>
+			<div class="option"> Forgotten Password? <span class="link" onclick="activateForm('reset');"> Reset password </span> </div>
+		</section>
+      	<section class="hidden" id="registerForm">
+            <p> Please enter the following information about yourself </p>
+                <form action="manage_user.php?register" method="post" onsubmit="validateRegisterInput($(this));" >
+                FirstName: <input type="text" name="firstname" /> <br/> 
+				LastName: <input type="text" name="lastname" /><br>
+                Username: <input type="text" name="username" required /> <br>
+				Email: <input type="email" name="emailId"  /> <br />
+                Password: <input type="password" name="password" required /> <br />
+                Confirm Password: <input type="password" name="confirmPassword" required /> <br />
+                <input type="submit" value="Submit" />
+                <input type="button" onclick= "toggleActiveForm()" value="Cancel" />
+            </form>
+        </section>
+		<section id="introText">
+			<?php include_once "includes/welcome.html" ?> 
+		</section>
+	</div>
 </body>
 </html>

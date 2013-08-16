@@ -1,0 +1,38 @@
+@import url("common.css");
+
+#loginContent, #registerContent {
+    display: flex;
+    display: -webkit-flex;
+    flex-flow: row nowrap;
+    -webkit-flex-flow: row nowrap;
+    align-items: baseline;
+    -webkit-align-items: baseline;
+    margin: 2em 0;
+
+}
+
+#loginForm, #registerForm {
+    border: 1px solid blue;
+    border-radius: 1em;
+    padding: 1em;
+    margin-right: 1em;
+    min-width: 10em;
+    max-height: 15em;
+}
+
+#introText {
+    max-width: 40em;
+    font-family: "Times New Roman", serif;
+}
+
+span.link {
+	cursor: pointer;
+	text-decoration: underline;
+
+}
+
+div.option {
+	margin: 0.5em 0;
+	font-size: smaller;	
+}
+

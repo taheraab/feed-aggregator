@@ -28,7 +28,6 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 	<link rel="stylesheet" href="styles/main.css">
 	<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
 	<script src="js/main.js"></script>
-	<script src="js/misc.js"></script>
 
 </head>
 <body>	
@@ -71,9 +70,9 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 		</article>
 		<nav>
 			<p><a href="index.php"> Home </a></p>
+			<p id="allItems" onclick = "setActiveFeed(-1, $(this));"> <span> All Items </span> 
+					<span></span></p>
 			<ul>
-				<li id="allItems" onclick = "setActiveFeed(-1, $(this));"> <span> All Items </span> 
-					<span></span></li><br />
 				<li id="subscriptions" ><div onclick="$(this).parent().toggleClass('collapsed');"> <span ></span><span>Subscriptions</span></div>
 					<img id="newFolder" src="resources/new_folder_icon.png" onclick="createFolder();" /> 
 					<ul id="feedList">

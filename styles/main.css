@@ -78,6 +78,8 @@ nav > ul:first-child .unread {
 	cursor: pointer;
 	text-decoration: underline;
 	margin: 0.2em;
+	cursor: pointer;
+	font-family: "Times New Roman", serif;
 }
 
 #feedList li.feed {
@@ -86,8 +88,12 @@ nav > ul:first-child .unread {
 
 #feedList li.folder, #subscriptions {
 	margin: 0.2em;	
-	text-decoration: underline;
 	cursor: pointer;
+	font-family: 'Verdana', sans-serif;
+}
+
+#feedList li.folder {
+	font-size: smaller;
 }
 
 #subscriptions > div {	
@@ -146,7 +152,7 @@ nav > ul:first-child .unread {
 	min-width: 15em;
 	order: 1;
 	-webkit-order: 1;
-	height: 35em;
+	height: 40em;
 	overflow-y: auto;
 }
 
@@ -159,7 +165,7 @@ nav > ul:first-child .unread {
 	flex-grow: 1;
 	-webkit-flex-grow: 1;
 	overflow-y: scroll;
-	height: 35em;
+	height: 40em;
 	margin-left: 1em;
 }
 
@@ -243,7 +249,7 @@ nav > ul:first-child .unread {
 }
 
 #entryList section:last-of-type {
-	height: 35em;
+	height: 40em;
 	text-align: center;
 }
 

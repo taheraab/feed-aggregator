@@ -2,6 +2,7 @@
 html, body {
     height: 100%;
     width: 100%;
+	font-family: "Times New Roman", serif;
 }
 
 .hidden {
@@ -20,16 +21,20 @@ header {
     -webkit-flex-flow: row nowrap;
 	align-items: center;
 	-webkit-align-items: center;
+	justify-content: space-between;
+	-webkit-justify-content: space-between;
+	margin-bottom: 0.5em;
+	border: 0px solid transparent;
+	border-bottom: 1px solid blue;
+	border-image: -webkit-linear-gradient(right, red, orange, yellow, green, blue, indigo, violet) 1 1 stretch;
+	border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1 1 stretch;
+	
 }
 
-header > h2 {
-    flex-grow: 1;
-    -webkit-flex-grow: 1;
-    text-align: center;
-}
 
 header #welcome > span {
     margin-right: 20px;
 
 }
+
 
