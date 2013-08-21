@@ -8,6 +8,7 @@ if (isset($_SESSION["loginErrMsg"])) {
     unset($_SESSION["loginErrMsg"]);
 }
 
+
 if (isset($_SESSION["currentUserId"])) {
 	header("Location: ".createRedirectURL("index.php"));
 	exit;
@@ -26,28 +27,35 @@ if (isset($_SESSION["currentUserId"])) {
 	<?php include_once ("includes/header.php"); ?>
 	<div class="errMsg"><?php if (isset($loginErrMsg)) echo $loginErrMsg; ?></div>
 	<div id="loginContent">
-		<section id="loginForm">
+		<section id="login">
+			<h4> Login </h4>
 			<form method="post" action="manage_user.php?login" >	
-				Username: <input type="text" name="username" required /><br>
+				Email: <input type="email" name="emailId" required /><br>
 				Password: <input type="password" name="password" required  /><br>
 				<input type="submit" value="Submit" />
 			</form>
-			<div class="option"> New User? <span class="link" onclick="toggleActiveForm();"> Click here to register </span> </div>
-			<div class="option"> Forgotten Password? <span class="link" onclick="activateForm('reset');"> Reset password </span> </div>
+			<div class="option"> New User? <span class="link" onclick="activateForm($('#register'));"> Click here to register </span> </div>
+			<div class="option"> Forgotten Password? <span class="link" onclick="activateForm($('#resetPassword'));"> Reset password </span> </div>
 		</section>
-      	<section class="hidden" id="registerForm">
-            <p> Please enter the following information about yourself </p>
+      	<section class="hidden" id="register">
+            <h4>Register </h4>
                 <form action="manage_user.php?register" method="post" onsubmit="validateRegisterInput($(this));" >
-                FirstName: <input type="text" name="firstname" /> <br/> 
+                FirstName: <input type="text" name="firstname" required /> <br/> 
 				LastName: <input type="text" name="lastname" /><br>
-                Username: <input type="text" name="username" required /> <br>
 				Email: <input type="email" name="emailId"  /> <br />
                 Password: <input type="password" name="password" required /> <br />
                 Confirm Password: <input type="password" name="confirmPassword" required /> <br />
                 <input type="submit" value="Submit" />
-                <input type="button" onclick= "toggleActiveForm()" value="Cancel" />
+                <input type="button" onclick= "activateSection($('#login'));" value="Cancel" />
             </form>
         </section>
+		<section class="hidden" class="hidden" id="resetPassword">
+			<h4> Reset Password <h4>
+			<form method="post" action="manage_user.php?resetPassword" >
+				Email: <input type="email" name="emailId" required /><br>
+				<input type="submit" value="Submit" />
+			</form>
+		</section>
 		<section id="introText">
 			<?php include_once "includes/welcome.html" ?> 
 		</section>

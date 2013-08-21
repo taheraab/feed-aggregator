@@ -71,10 +71,8 @@ function loadFeeds() {
 		var currentFolderName = "";
 		for (var i = 0; i < feeds.length; ++i) {
 			content += "<div id='Feed" + feeds[i].id + "'> <input form='subscriptionsForm' type='checkbox' name='feedIds[]' value='" + feeds[i].id + 
-				"'></input> <div class='feedName'><span>" + feeds[i].title + "</span>";
-			if (feeds[i].selfLink.length) 
-				content += "<br /><span>(" + feeds[i].selfLink + ")</span>";
-			content += "</div> <div><button type='button' onclick = \"unsubscribeFeed(" + feeds[i].id + ", '" + feeds[i].title + 
+				"'></input> <div class='feedName'><span>" + feeds[i].title + "</span><br /><span>(" + feeds[i].selfLink + ")</span>" + 
+				"</div> <div><button type='button' onclick = \"unsubscribeFeed(" + feeds[i].id + ", '" + feeds[i].title + 
 				"');\" >Unsubscribe</button></div>";
 			if (feeds[i].folder_id == rootId) currentFolderName = "<span class='currentFolderName'>root</span>";
 			else currentFolderName = "<span class='currentFolderName'>" + $("#Folder" + feeds[i].folder_id).find("span.folderName").text() + "</span>"; 

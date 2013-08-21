@@ -5,19 +5,17 @@ session_start();
 
 $userManager = new UserManager();
 if (isset($_REQUEST["login"])) {
-	error_log("in login", 0);
-	$username = filter_var($_POST["username"], FILTER_SANITIZE_STRING);
-    $userId = $userManager->userExists($username);
-    if ($userId) {
+	$emailId = filter_var($_POST["emailId"], FILTER_SANITIZE_EMAIL);
+    if ($userManager->userExists($emailId)) { // check only confirmed users
         $password = filter_var($_POST["password"], FILTER_SANITIZE_STRING);
-        if($userManager->authenticate($userId, $password)) {
+        if (crypt($password, $user->password) == $user->password) {
             // if authentication succeeds, set the current_user in session
-            $_SESSION["currentUsername"] = $username;
-            $_SESSION["currentUserId"] = $userId;
+            $_SESSION["currentUsername"] = $user->name;
+            $_SESSION["currentUserId"] = $user->id;
         }else {
-            $errMsg =  "Incorrect password, please try again";
+            $errMsg =  "Email Id or password incorrect, please try again";
         }
-    }else $errMsg =  "Username doesn't exist, please try again";
+    }else $errMsg =  "Email Id or password incorrect, please try again";
 
 	if (isset($errMsg)) $_SESSION["loginErrMsg"] = $errMsg;
  	header("Location: ".createRedirectURL("login.php"));
@@ -30,33 +28,51 @@ if (isset($_REQUEST["login"])) {
     exit;
 
 }else if (isset($_REQUEST["register"])) {
-    $username = filter_var($_POST["username"], FILTER_SANITIZE_STRING);
-    if ($userManager->userExists($username)) {
-        $errMsg = "Username not available, please try again ";
+    $emailId = filter_var($_POST["emailId"], FILTER_SANITIZE_EMAIL);
+    if ($userManager->userExists($emailId)) { // check confirmed users
+        $errMsg = "Error creating new user, please try again ";
     } else {
         //Add user to the database and session  
         if (isset($_POST["firstname"])) $name = filter_var($_POST["firstname"], FILTER_SANITIZE_STRING);
         if (isset($_POST["lastname"])) $name = $name." ".filter_var($_POST["lastname"], FILTER_SANITIZE_STRING);
-		$emailId = filter_var($_POST["emailId"], FILTER_SANITIZE_EMAIL);
 		$password = filter_var($_POST["password"], FILTER_SANITIZE_STRING);
-       	if (empty($username) || empty($emailId) || empty($password)) {
-			$errMsg = "One or more of required fields (username, email and password) are empty, try again";
+       	if (empty($name) || empty($emailId) || empty($password)) {
+			$errMsg = "One or more of required fields (name, email and password) are empty, try again";
 		}else {
-		   $user = new User($name, $username, $password, $emailId);
- 	       $userId = $userManager->createUser($user);
-    	    if ($userId) {// if creation was successful
-        	    $_SESSION["currentUsername"] = $user->getUsername();
-            	$_SESSION["currentUserId"] = $userId;
-       	    	header("Location: ".createRedirectURL("login.php"));
-        	    exit; 
-	       }else $errMsg = "Error creating new user, please try again ";
+		    $user = new User();
+		    $user->emailId = $emailId;
+		    $user->password = crypt($password);
+			$user->name = $name;
+ 	        if ($token = $userManager->sendConfirmationLink($emailId, $name)) {
+				$now = new DateTime();
+				$user->token = $token;
+				$user->tokenTimestamp = $now->getTimestamp(); 
+		   	  	if ($userManager->createUser($user)) {
+					$msg = "A confirmation email has been sent to given email Id. Click on the link to confirm email before logging in";
+		   		}else $errMsg = "Error creating user, please try again";		
+		    } else $errMsg = "Confirmation email could not be sent, please try again";
        }
 	}
-	if (isset($errMsg)) $_SESSION["loginErrMsg"] = $errMsg;
- 	header("Location: ".createRedirectURL("login.php?register"));
-    exit;
+	if (isset($errMsg)) {
+		$_SESSION["loginErrMsg"] = $errMsg;
+	 	header("Location: ".createRedirectURL("login.php?register"));
+    	exit;
+	}
 
 }else if (isset($_REQUEST["resetPassword"])) {
+    $emailId = filter_var($_POST["emailId"], FILTER_SANITIZE_EMAIL);
+	if ($user = $userManager->userExists($emailId)) { // check only confirmed users
+	    //Send reset password request
+		if ($userManager->sendResetPasswordLink($user->id, $user->emailId)) {
+			$msg = "Sent passord reset link to given email Id. Complete reset process from link given in email."
+		}else $errMsg =  "Error sending reset password request, please try again";
+	}else $errMsg = "Error sending reset password request, please try again";
+	if (isset($errMsg)) {
+		$_SESSION["loginErrMsg"] = $errMsg;
+	 	header("Location: ".createRedirectURL("login.php?register"));
+    	exit;
+	}
+
 
 
 }else if (isset($_REQUEST["changePassword"])) {
@@ -65,3 +81,14 @@ if (isset($_REQUEST["login"])) {
 }
 
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Confirmation </title>
+<link rel="stylesheet" href="styles/user.css" >
+</head>
+<body>
+    <?php include_once ("includes/header.php"); ?>
+    <p><?php if (isset($msg)) echo $msg; ?></p>
+</body>
+</html>

@@ -1,7 +1,9 @@
+var $activeSection = null;
+
 $(document).ready(function() {
     var queryString = window.location.search.substring(1);
-    if (queryString == "register") {
-		toggleActiveForm();
+    if (queryString != "") {
+		activateSection($('#' + queryString));
   	}
    
 }); 
@@ -9,9 +11,10 @@ $(document).ready(function() {
 
 
 
-function toggleActiveForm() {
-        $("#registerForm").toggleClass("hidden");
-		$("#loginForm").toggleClass("hidden");
+function activateSection($elm) {
+	if ($activeSection != null) $activeSection.addClass("hidden");
+	$elm.removeClass("hidden");
+	$activeSection = $elm;
 }
 
 //validate register form input
