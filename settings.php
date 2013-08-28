@@ -18,6 +18,16 @@ if (isset($_SESSION["foldersErrMsg"])) {
 	$foldersErrMsg = $_SESSION["foldersErrMsg"];
 	unset($_SESSION["foldersErrMsg"]);
 }
+
+if (isset($_SESSION["myAccountErrMsg"])) {
+	$myAccountErrMsg = $_SESSION["myAccountErrMsg"];
+	unset($_SESSION["myAccountErrMsg"]);
+}
+
+if (isset($_SESSION["myAccountMsg"])) {
+	$myAccountMsg = $_SESSION["myAccountMsg"];
+	unset($_SESSION["myAccountMsg"]);
+}
 ?>
 
 <!DOCTYPE html>
@@ -27,6 +37,7 @@ if (isset($_SESSION["foldersErrMsg"])) {
 	<title>Feed Reader</title>
 	<link rel="stylesheet" href="styles/settings.css">
 	<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
+	<script src="js/common.js"></script>
 	<script src="js/settings.js"></script>
 
 </head>
@@ -42,6 +53,7 @@ if (isset($_SESSION["foldersErrMsg"])) {
 				<li name="subscriptions" onclick = "setActiveTab($(this), 'subscriptions');">Subscriptions</li>
 				<li name="folders" onclick = "setActiveTab($(this), 'folders');">Folders</li>
 				<li name="import" onclick = "setActiveTab($(this), 'import');">Import/Export</li>
+				<li name="myAccount" onclick = "setActiveTab($(this), 'myAccount');">My account</li>
 			</ul>
 		</nav>
 		<article>
@@ -90,6 +102,20 @@ if (isset($_SESSION["foldersErrMsg"])) {
 				<div id="folderList">
 
 				</div> 
+			</section>
+			<section id="myAccount" class="hidden">
+				<h4> Change Password </h4>
+		        <div class="errMsg"><?php if (isset($myAccountErrMsg)) echo $myAccountErrMsg; ?></div>
+   			    <form method="post" action="manage_user.php?changePassword" onsubmit="validatePasswords($(this));" >
+   			        Current Password: <input type='password' name='currentPassword' required /><br />
+    			    New Password: <input type="password" name="password" required /><br />
+    			    Confirm Password: <input type="password" name="confirmPassword" required /><br />
+      			  <input type= "submit" value="Submit" />
+      	  	    </form>
+				<?php if (isset($myAccountMsg)) {
+		    		  echo "<p>".$myAccountMsg."</p>";
+			    }?>
+				
 			</section>
 		</article>
 	</div>

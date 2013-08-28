@@ -19,7 +19,6 @@ class FolderManager extends DBManager{
 	// Returns id for new folder on success, false on failure
 	public function createFolder($userId, $name) {
 		if (empty($name)) return false;
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("INSERT INTO Folder (name, user_id) VALUES (:name, :userId)");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
@@ -37,7 +36,6 @@ class FolderManager extends DBManager{
 
 	// Check if folder exists and return it's id on success
 	public function folderExists($userId, $name) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			// Check if folder exists 
 			$stmt = $this->dbh->prepare("SELECT id FROM Folder WHERE name = :name AND user_id = :userId");
@@ -57,7 +55,6 @@ class FolderManager extends DBManager{
 	// Returns all folders for a given user
 	// Returns a list of Folder objects on success, false on failure
 	public function getFolders($userId) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT id, name FROM Folder WHERE user_id = :userId");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
@@ -74,7 +71,6 @@ class FolderManager extends DBManager{
 	// Delete a folder, associate all it's feeds with the root folder
 	// Returns true on success, false on failure
 	public function deleteFolder($userId, $folderId) {
-        if ($this->dbh == null) $this->connectToDB();
         try {
             $this->dbh->beginTransaction();
 			// First get root id

@@ -22,7 +22,6 @@ class FeedManager extends DBManager{
 	//Get Feed recs from a folder
 	// Returns a list of Feed objects on success, false on failure
 	public function getFeedsFromFolder($folderId) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT Feed.title, Feed.selfLink, Feed.alternateLink FROM UserFeedRel INNER JOIN Feed ".
 				"ON UserFeedRel.feed_id = Feed.id WHERE UserFeedRel.folder_id = :folderId");
@@ -44,7 +43,6 @@ class FeedManager extends DBManager{
 	//Get Feed recs for folder organization on the Settings page
 	// Returns list of Feed objects on success, false on failure
 	public function getFeedsForSettings($userId) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT Feed.id, Feed.title, Feed.selfLink, UserFeedRel.folder_id FROM UserFeedRel INNER JOIN Feed ".
 				"ON UserFeedRel.feed_id = Feed.id WHERE UserFeedRel.user_id = :userId");
@@ -69,7 +67,6 @@ class FeedManager extends DBManager{
 	// Returns all feeds for a given user
 	// Returns a list of Feed objects on success, false on failure.
 	public function getFeeds($userId) {
-   		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT Feed.*, UserFeedRel.folder_id FROM UserFeedRel INNER JOIN Feed ON UserFeedRel.feed_id = Feed.id ".
 				"WHERE UserFeedRel.user_id = :userId");
@@ -94,7 +91,6 @@ class FeedManager extends DBManager{
 
 	// Returns all feed records that were last checked for update before or at the given timestamp
 	public function getFeedsToUpdate($timestamp) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("SELECT id, selfLink FROM Feed WHERE lastCheckedAt <= :lastCheckedAt");
 			$stmt->bindValue(":lastCheckedAt", $timestamp, PDO::PARAM_INT);
@@ -112,7 +108,6 @@ class FeedManager extends DBManager{
 	// Adds a feed to the database for the given user
 	// Returns true on success, false on failure
 	public function createFeed($userId, $folderId, Feed $feed) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
    		    // Check if feed already exists
 			$stmt = $this->dbh->prepare("SELECT id FROM Feed WHERE feedId = :feedId");
@@ -144,7 +139,6 @@ class FeedManager extends DBManager{
 	// Update an existing feed, called when a new subscription is added for a user
 	// Returns true on success, false on failure 
 	public function updateFeed($userId, $folderId, Feed $feed) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {	
 			$this->dbh->beginTransaction();
 			if ($userId) { // if userId is given, then this may be a new subscription
@@ -286,7 +280,6 @@ class FeedManager extends DBManager{
 	// Changes folder for a feed for a given user
 	//Returns true on success, false on failure
 	public function changeFolder($userId, $feedId, $newFolderId) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("UPDATE UserFeedRel SET folder_id = :newFolderId WHERE feed_id = :feedId AND user_id = :userId");
 			$stmt->bindValue(":userId", (int)$userId, PDO::PARAM_INT);
@@ -304,7 +297,6 @@ class FeedManager extends DBManager{
 	// Unsubscribe user from given feed
 	// Returns true on success, false on failure
 	public function unsubscribeFeed($userId, $feedId) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$this->dbh->beginTransaction();
 			// First remove all entry association 

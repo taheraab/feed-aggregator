@@ -21,6 +21,7 @@ if (isset($_SESSION["currentUserId"])) {
 	<title> Login to FeedAggregator </title>
 <link rel="stylesheet" href="styles/user.css" >
 <script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
+<script src="js/common.js"> </script>
 <script src="js/user.js"></script>
 </head>
 <body>
@@ -34,12 +35,12 @@ if (isset($_SESSION["currentUserId"])) {
 				Password: <input type="password" name="password" required  /><br>
 				<input type="submit" value="Submit" />
 			</form>
-			<div class="option"> New User? <span class="link" onclick="activateForm($('#register'));"> Click here to register </span> </div>
-			<div class="option"> Forgotten Password? <span class="link" onclick="activateForm($('#resetPassword'));"> Reset password </span> </div>
+			<div class="option"> New User? <span class="link" onclick="activateSection($('#register'));"> Click here to register </span> </div>
+			<div class="option"> Forgotten Password? <span class="link" onclick="activateSection($('#resetPassword'));"> Reset password </span> </div>
 		</section>
       	<section class="hidden" id="register">
             <h4>Register </h4>
-                <form action="manage_user.php?register" method="post" onsubmit="validateRegisterInput($(this));" >
+                <form action="manage_user.php?register" method="post" onsubmit="validatePasswords($(this));" >
                 FirstName: <input type="text" name="firstname" required /> <br/> 
 				LastName: <input type="text" name="lastname" /><br>
 				Email: <input type="email" name="emailId"  /> <br />
@@ -51,7 +52,7 @@ if (isset($_SESSION["currentUserId"])) {
         </section>
 		<section class="hidden" class="hidden" id="resetPassword">
 			<h4> Reset Password <h4>
-			<form method="post" action="manage_user.php?resetPassword" >
+			<form method="post" action="manage_user.php?sendResetPasswordLink" >
 				Email: <input type="email" name="emailId" required /><br>
 				<input type="submit" value="Submit" />
 			</form>

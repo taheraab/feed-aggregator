@@ -1,6 +1,6 @@
 @import url("common.css");
 
-#loginContent, #registerContent {
+#loginContent {
     display: flex;
     display: -webkit-flex;
     flex-flow: row nowrap;
@@ -11,7 +11,7 @@
 
 }
 
-#loginForm, #registerForm {
+#login, #register, #resetPassword {
     border: 1px solid blue;
     border-radius: 1em;
     padding: 1em;
@@ -25,11 +25,6 @@
     font-family: "Times New Roman", serif;
 }
 
-span.link {
-	cursor: pointer;
-	text-decoration: underline;
-
-}
 
 div.option {
 	margin: 0.5em 0;

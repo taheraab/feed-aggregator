@@ -18,7 +18,6 @@ class EntryManager extends DBManager{
 
 	// Delete 'unstarred' and 'read' entries older than given timestamp
 	public function deleteOldEntries($timestamp) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 		echo $timestamp."\n";
 			$stmt = $this->dbh->prepare("DELETE FROM Entry WHERE updated < :timestamp AND id NOT IN ".
@@ -37,7 +36,6 @@ class EntryManager extends DBManager{
 	// Returns total num of unread entries for all feeds if feedId = 0
 	// Returns false on failure
 	public function getNumUnreadEntries($userId, $feedId) {
-   		if ($this->dbh == null) $this->connectToDB();
 		try {
  			$query = "SELECT COUNT(*) FROM Entry INNER JOIN UserEntryRel ON ".
        			"Entry.id = UserEntryRel.entry_id WHERE UserEntryRel.user_id = :userId AND ".
@@ -61,7 +59,6 @@ class EntryManager extends DBManager{
 	// Returns all entries if feedId = 0;
 	// Returns List of Entry objects on success, false on failure
 	public function getEntries($userId, $feedId, $entryPageSize, $lastLoadedEntryId) {
-   		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$query = "SELECT Entry.*, UserEntryRel.status, UserEntryRel.type FROM Entry INNER JOIN UserEntryRel ON ".
 				"Entry.id = UserEntryRel.entry_id WHERE UserEntryRel.user_id = :userId";
@@ -128,7 +125,6 @@ class EntryManager extends DBManager{
 	// Updates UserEntryRel for given entries (objects containing values for UserEntryRel row)
 	// Returns true if all entries are updated , false on failure
 	public function updateUserEntryRelRecs($userId, $entries) {
-		if ($this->dbh == null) $this->connectToDB();
 		try {
 			$stmt = $this->dbh->prepare("UPDATE UserEntryRel SET status = :status, type = :type WHERE entry_id = :entryId AND user_id = :userId");
 			$result = true;

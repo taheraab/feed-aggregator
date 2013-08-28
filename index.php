@@ -35,7 +35,7 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 	<div id="toolbar">
 		<div>
 			<div class="errMsg"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
-			<button type="button" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
+			<button type="button" name="subscribe" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
 			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" onsubmit="setFolderId($(this))" >
 				<input type='hidden' name='folderId' />
 				Atom/RSS Link: <br /><input type="url" name="url" />
@@ -67,6 +67,10 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 	</div>
 	<div id="content">
 		<article id="entryList">
+			<p> You are currently not subscribed to any Feeds. 
+				<a href="settings.php?import">Import</a> an OPML file</a> or 
+				<span class="link" onclick="$('button[name=\'subscribe\']').click();" >Subscribe</span> to a feed.
+			</p> 
 		</article>
 		<nav>
 			<p><a href="index.php"> Home </a></p>
