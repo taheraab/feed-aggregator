@@ -9,6 +9,14 @@ var filter = "all";
 var activeFolderId = 0;
 var rootId;
 var getFeedsTimerId;
+var pageState = {
+	activeFeedId: 0,
+	activeFolderId: 0,
+	activeEntryId: 0,
+	numEntriesLoaded: 0
+};
+
+var initialPageState;
 
 function EntryObj(id, status, type) {
 	this.id = id;
@@ -24,8 +32,22 @@ $(document).ready(function(){
 	$("#entryList").scroll(setActiveEntry);
 	setUpdateTimer();
 	setGetFeedsTimer();
+	initialPageState = window.history.state;
+	console.log(initialPageState);
 
 });
+
+// if the response to an ajax request is not json, then page is redirected due to session timeout
+$(document).ajaxComplete(function(event, xhr, settings) {
+	if (xhr.getResponseHeader("Content-type") == "text/html") {
+		// redirected to login page
+        document.open();
+        document.write(xhr.responseText);
+        document.close();
+    }
+
+});
+
 
 function setUpdateTimer() {
 	window.setInterval(updateEntries, 60000); // save updated entries after 60 secs 
@@ -43,17 +65,21 @@ function loadFolders() {
 		var content = "";
 		for (var i = 0; i < folders.length; i++) {
 			if (folders[i].name == "root" ) {
-				rootId = folders[i].id;
-				content += "<li><ul id='root" + rootId + "'></ul></li>";
+				rootId = activeFolderId = folders[i].id;
+				content += "<li><ul id='Folder" + rootId + "'></ul></li>";
 			}else {
 				// Create a navigation entry for each folder 
-				content += "<li class='folder' ><div onclick='setActiveFolder(" + folders[i].id + ",$(this).parent());'>" + 
+				content += "<li id='Folder" + folders[i].id + "' class='folder' ><div onclick='setActiveFolder(" + folders[i].id + 
+				",$(this).parent()); $(this).parent().toggleClass(\"collapsed\"); '>" + 
 				"<span></span><img src='resources/folder_icon.png' ><span>" + folders[i].name + "</span></div><ul id='folder" + 
 				folders[i].id + "'> </ul></li>";
 			}
 			
 		}	
 		$("#feedList").append(content);
+		if (initialPageState != null) {
+			setActiveFolder(initialPageState.activeFolderId, $("#Folder" + initialPageState.activeFolderId));
+		}
 		// Now load feeds
 		loadFeeds();
 	});
@@ -114,8 +140,13 @@ function loadFeeds() {
 		// If no more new feeds were added, clear GetFeedsTimer
 		if (!newFeed) window.clearInterval(getFeedsTimerId);
 		// Set the first feed as active feed	
-		if (!feedExists) 
-			$("#feedList li.feed").first().click();
+		if (!feedExists) { 
+			if (initialPageState == null) $("#feedList li.feed").first().click();
+			else {
+				if (initialPageState.activeFeedId) $("#Feed" + initialPageState.activeFeedId).click();
+				else $("#allItems").click();
+			}
+		}
 	});
 }
 
@@ -132,12 +163,18 @@ function setActiveFeed(i, $elm) {
 	$entryList.empty();
 	activeFeedIndex = i; // index into myFeeds
 	if (i != -1) {
-		activeFolderId = myFeeds[i].folder_id;
+		// update page state
+		pageState.activeFeedId = myFeeds[i].id;
+		window.history.replaceState(pageState, "");
+		setActiveFolder(myFeeds[i].folder_id, $("#Folder" + myFeeds[i].folder_id));
 		$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
 		$("#unsubscribe input[type='submit']").prop("disabled", false);
 	}else {
 		// In all items, disable Unsubscribe
 		$("#unsubscribe input[type='submit']").prop("disabled", true);
+		pageState.activeFeedId = 0;
+		pageState.activeFolderId = rootId;
+		window.history.replaceState(pageState, "");
 	}
 	loadEntries();
 }
@@ -148,7 +185,8 @@ function setActiveFolder(id, $elm) {
 	$activeFolder = $elm;
 	$activeFolder.toggleClass("active");
 	activeFolderId = id;
-	$elm.toggleClass("collapsed");
+	pageState.activeFolderId = id;
+	window.history.replaceState(pageState, "");
 }
 
 // Load a page of entries from DB for active feed
@@ -167,7 +205,9 @@ function loadEntries() {
 			}
 		});
 	}
-	$.getJSON("manage_feeds.php?getEntries&feedId=" + feedId + "&entryPageSize=" + entryPageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
+	var pageSize = entryPageSize;
+	if (initialPageState != null) pageSize = initialPageState.numEntriesLoaded + 1; //Add one to make sure the 'scroll down for more entries' does not appear
+	$.getJSON("manage_feeds.php?getEntries&feedId=" + feedId + "&entryPageSize=" + pageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
 	 function(entries) {
 		if (!entries) {
 			$entryList.append("<section id='last'> No more Entries </section>");
@@ -182,7 +222,7 @@ function loadEntries() {
 					hidden = "";
 		
 			}
-			var content = "<section " + hidden + " id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a href='" +
+			var content = "<section " + hidden + " id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a target='_blank' href='" +
 				 entries[i].alternateLink + "'>" + entries[i].title + "</a></div>";
 			if (activeFeedIndex == -1) {
 				// Show feed title instead of author
@@ -201,8 +241,9 @@ function loadEntries() {
 				"<label for='status'> Keep unread</label></div></section>";
 			$entryList.append(content);
 		}
-		lastLoadedEntryId = entries[entries.length- 1].id;
-		if (entries.length < entryPageSize) {
+		if (entries.length) lastLoadedEntryId = entries[entries.length- 1].id;
+
+		if (entries.length < pageSize) {
 			// The last entry has been received
 			$entryList.append("<section id='last'>  No more Entries  </section>");
 		}else {
@@ -211,10 +252,23 @@ function loadEntries() {
 		}
 		if ($activeEntry == null) {
 			// This is the first page
-			$activeEntry = $("#entryList section:first-of-type");
+			if (initialPageState == null) $activeEntry = $("#entryList section:first-of-type");
+			else {
+				$activeEntry = $("#" + initialPageState.activeEntryId);
+				// scroll to active Entry
+				var activeEntry = document.getElementById(initialPageState.activeEntryId);
+				activeEntry.scrollIntoView(true);
+			}
 			$activeEntry.addClass("highlighted");
+			// Initialize entry stated
+			pageState.activeEntryId = $activeEntry.attr("id");
+			pageState.numEntriesLoaded = entries.length;
+		}else {
+			pageState.numEntriesLoaded += entries.length;
 		}
-
+		initialPageState = null; // set to to null after it is used for the first time
+		window.history.replaceState(pageState, "");
+		console.log(pageState);
 	});
 }
 
@@ -246,6 +300,8 @@ function setActiveEntry() {
 					}
 					$activeEntry = $nextEntry;
 					$activeEntry.toggleClass("highlighted");
+					pageState.activeEntryId = $activeEntry.attr("id");
+					window.history.replaceState(pageState, "");
 				}
 			}
 		}else { 
@@ -259,6 +315,8 @@ function setActiveEntry() {
 				$activeEntry.toggleClass("highlighted");
 				$activeEntry = $prevEntry;
 				$activeEntry.toggleClass("highlighted");
+				pageState.activeEntryId = $activeEntry.attr("id");
+				window.history.replaceState(pageState, "");
 			}
 		}
 	}
@@ -291,11 +349,9 @@ function setEntryStatus($elm) {
 // Increments/Decrements/Sets unread count for active Feed element
 function updateUnreadCount(option, value) {
 	if (typeof(value) === "undefined") value = 0;
-	console.log(option + " " + value);
 	value = parseInt(value);
 	var $spanElm = $activeFeed.find("span:last-child");
 	var count = parseInt($spanElm.data("unreadCount")); 		
-	console.log(count);
 	if (option == "decrement") {
 		if (count) {
 			count--;
@@ -369,14 +425,6 @@ function filterView() {
 
 }
 
-//set Folder Id to active folder Id
-function setFolderId($form) {
-	var folderId;
-	if (activeFolderId)	folderId = activeFolderId;
-	else folderId = rootId;
-	$form.find("input[name='folderId']").val(folderId);
-	return true;
-}
 
 // Called when new folder icon is clicked
 function createFolder() {
@@ -385,7 +433,6 @@ function createFolder() {
 	if ((name != null) && (name != "") ) {
 		// Add folder to DB and make it active
 		$.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
-			console.log(id);
 			if (!id) {
 				alert ("Cannot create folder with the given name, please try again");
 				

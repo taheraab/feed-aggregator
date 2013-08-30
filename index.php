@@ -19,6 +19,7 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 	$unsubscribeErrMsg = $_SESSION["unsubscribeErrMsg"];
 	unset($_SESSION["unsubscribeErrMsg"]);
 }
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -36,7 +37,8 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 		<div>
 			<div class="errMsg"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
 			<button type="button" name="subscribe" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
-			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" onsubmit="setFolderId($(this))" >
+			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" 
+				onsubmit="$(this).find('input[name=\'folderId\']').val(activeFolderId);" >
 				<input type='hidden' name='folderId' />
 				Atom/RSS Link: <br /><input type="url" name="url" />
 				<input type="submit" value="Submit" />

@@ -11,6 +11,17 @@ $(document).ready(function() {
 	else setActiveTab($("nav li:first-child"), $("article section:first-child").attr("id"));
 }); 
 
+// if the response to an ajax request is not json, then page is redirected due to session timeout
+$(document).ajaxComplete(function(event, xhr, settings) {
+    if (xhr.getResponseHeader("Content-type") == "text/html") {
+        // redirected to login page
+        document.open();
+        document.write(xhr.responseText);
+        document.close();
+    }
+
+});
+
 // Implement tabbed menu
 function setActiveTab($tab, sectionId) {
 	if (sectionId == "subscriptions" || sectionId == "folders") {
