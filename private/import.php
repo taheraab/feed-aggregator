@@ -21,7 +21,6 @@ if ($feedUrls) {
 		if (!$folderId) $folderId = $folderManager->createFolder($userId, $folderName); 
 		if ($folderId) {
 			foreach($xmlUrls as $xmlUrl) {
-				echo $folderName.":".$folderId.":";
 				if ($feed = $feedParser->parseFeed($xmlUrl)) {
     				if (!$feedManager->createFeed($userId, $folderId, $feed)) $errMsg = "Error creating subscription, please try again";
 	  			}else $errMsg = "Invalid Atom or RSS xml";

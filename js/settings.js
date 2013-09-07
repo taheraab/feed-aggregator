@@ -7,8 +7,9 @@ $(document).ready(function() {
 	var queryString = window.location.search.substring(1);
 	if (queryString != "") {
 		setActiveTab($("nav li[name='" + queryString + "']"), queryString);
-	}
-	else setActiveTab($("nav li:first-child"), $("article section:first-child").attr("id"));
+	}else if (window.history.state) {
+        setActiveTab($("nav li[name='" + window.history.state + "']"), window.history.state);
+	}else setActiveTab($("nav li:first-child"), $("article section:first-child").attr("id"));
 }); 
 
 // if the response to an ajax request is not json, then page is redirected due to session timeout
@@ -36,6 +37,7 @@ function setActiveTab($tab, sectionId) {
 	$activeSection = $section;
 	$activeTab.toggleClass("active");
 	$activeSection.toggleClass("hidden");
+    window.history.replaceState(sectionId, "");
 }
 
 // Load folders from server and set up Folders tab content 

@@ -33,7 +33,6 @@ $(document).ready(function(){
 	setUpdateTimer();
 	setGetFeedsTimer();
 	initialPageState = window.history.state;
-	console.log(initialPageState);
 
 });
 

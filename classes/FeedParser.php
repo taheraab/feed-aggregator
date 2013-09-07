@@ -6,7 +6,7 @@ include_once (dirname(__FILE__)."/../includes/htmlpurifier-4.5.0-lite/library/HT
 class FeedParser {
 
 	private $xmlReader = null;
-	
+
 	// Parses the Xml feed from given url and returns the ATomFeed object	
 	public function parseFeed($feedURL){
 		if ($this->xmlReader == null) $this->xmlReader= new XMLReader();
@@ -276,8 +276,8 @@ class FeedParser {
 //include_once "FeedManager.php";
 
 $p = new FeedParser();
-
-$feed = $p->parseFeed("http://feeds.feedburner.com/youthcurryblogspotcom");
+var_dump($p->getFeedUrls("http://blog.linuxmint.com/"));
+//$feed = $p->parseFeed("http://feeds.feedburner.com/youthcurryblogspotcom");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_rss_2.0.xml");
 //$feed = $p->parseFeed("/home/tahera/Documents/sample_feed_content2.xml");
 var_dump($feed);

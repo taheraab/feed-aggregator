@@ -40,7 +40,7 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" 
 				onsubmit="$(this).find('input[name=\'folderId\']').val(activeFolderId);" >
 				<input type='hidden' name='folderId' />
-				Atom/RSS Link: <br /><input type="url" name="url" />
+				Website or Atom/RSS Link: <br /><input type="url" name="url" required />
 				<input type="submit" value="Submit" />
 			</form> 
 		</div>
@@ -62,7 +62,6 @@ if (isset($_SESSION["unsubscribeErrMsg"])) {
 			<button type="button" onclick = "$(this).next().toggleClass('hidden');"> </button>
 			<ul class="hidden"> 
 				<li onclick = "window.location = 'settings.php';">Reader settings</li>
-				<li>Something Else Like</li>
 			</ul>
 		</diV>
 		

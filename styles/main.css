@@ -11,7 +11,8 @@
 }
 
 #toolbar > div:first-child {
-	min-width: 15em;
+	max-width: 15em;
+    min-width: 15em;
 }
 
 #subsForm {
@@ -30,8 +31,8 @@
 
 }
 #unsubscribe {
-	-webkit-flex-grow: 6;
-	flex-grow: 6;
+	-webkit-flex-grow: 3;
+	flex-grow: 3;
 }
 
 #settingsMenu {
@@ -150,6 +151,7 @@ nav > ul:first-child .unread {
 
 #content > nav {
 	min-width: 15em;
+    max-width: 15em;
 	order: 1;
 	-webkit-order: 1;
 	height: 40em;

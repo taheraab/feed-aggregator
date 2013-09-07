@@ -92,13 +92,18 @@ if (isset($_GET["getFeeds"])) {
 	$folderId = filter_var($_POST["folderId"], FILTER_SANITIZE_NUMBER_INT);
     $feedParser = new FeedParser();
     $feedManager = new FeedManager();
-    $feed = $feedParser->parseFeed(filter_var($_POST["url"], FILTER_SANITIZE_STRING));
-    if ($feed) {
-       if(!$feedManager->createFeed($_SESSION["currentUserId"], $folderId, $feed)) {
-           $errMsg = "Couldn't create feed, try again";
-       }
-    }else {
-       $errMsg = "Couldn't parse feed, try again";
+    $url = filter_var($_POST["url"], FILTER_SANITIZE_STRING);
+    $feedUrl = getFeedUrlFromHtml($url);
+    if (empty($feedUrl)) $errMsg = "Couldn't find a Atom/RSS Url in given link";
+    else {
+        $feed = $feedParser->parseFeed($feedUrl);
+        if ($feed) {
+           if(!$feedManager->createFeed($_SESSION["currentUserId"], $folderId, $feed)) {
+               $errMsg = "Couldn't create feed, please try again";
+           }
+        }else {
+           $errMsg = "Invalid Atom/RSS xml";
+        }
     }
 	if (isset($errMsg)) $_SESSION["subsErrMsg"] = $errMsg;
  	header("Location: ".createRedirectURL("index.php"));
