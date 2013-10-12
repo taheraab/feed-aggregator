@@ -12,28 +12,7 @@ if ($pid == -1) {
 	//In parent
 	exit("Successfully created a child process with id: ".$pid);
 }else {
-	// In child, detach from parent
-	if (posix_setsid() == -1) {
-		exit("Could not detach from parent process");
-	}
-	$myPID = posix_getpid();
-	// Handle signals
-	pcntl_signal(SIGTERM, "signalHandler");
 
-	// Write pid to a file
-	$fd = fopen("pid", "c");
-	if (!$fd) {
-		exit("Couldn't open pid file");
-
-	}
-	// Check if an instance is already running
-	if (!flock($fd, LOCK_EX | LOCK_NB)) {
-		exit("An instance is already running");
-	}
-	ftruncate($fd, 0);
-	fwrite($fd, "$myPID");
-	fflush($fd);
-	
 	// Redirect STDIN, STDOUT, STDERR
 	fclose(STDIN);
 	fclose(STDOUT);
@@ -43,6 +22,28 @@ if ($pid == -1) {
 	$stdout = fopen("log/feed_updater_log", "w");
 	$stderr = $stdout;
 
+// In child, detach from parent
+	if (posix_setsid() == -1) {
+		exit("Could not detach from parent process");
+	}
+	$myPID = posix_getpid();
+	// Handle signals
+	pcntl_signal(SIGTERM, "signalHandler");
+
+    
+	// Write pid to a file
+	$fd = fopen("files/pid", "c");
+	if (!$fd) {
+		exit("Couldn't open pid file");
+	}
+	// Check if an instance is already running
+	if (!flock($fd, LOCK_EX | LOCK_NB)) {
+		exit("An instance is already running");
+	}
+	ftruncate($fd, 0);
+	fwrite($fd, "$myPID");
+	fflush($fd);
+	
 	// update feeds
 	while (1) {
 		updateFeeds();
@@ -57,10 +58,12 @@ function updateFeeds() {
 	$now = new DateTime();
 	$lastCheckedAt = $now->sub(new DateInterval("PT30M")); // update every 30 minutes
 	$feedRecs = $feedManager->getFeedsToUpdate($lastCheckedAt->getTimestamp()); // Get Feeds that need update
-	foreach ($feedRecs as $feedRec) {
+    foreach ($feedRecs as $feedRec) {
+        echo "Parsing".$feedRec->selfLink."\n";
 		if ($feed = $feedParser->parseFeed($feedRec->selfLink)) {
+            echo "Updating\n";
 			$feed->id = $feedRec->id;
-		    $feedManager->updateFeed(0, $feed);
+		    $feedManager->updateFeed(0, 0, $feed);
 		}
 
 	}
