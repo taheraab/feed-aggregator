@@ -1,7 +1,7 @@
 <?php
 
 include_once "Feed.php";
-include_once (dirname(__FILE__)."/../includes/htmlpurifier-4.5.0-lite/library/HTMLPurifier.auto.php");
+include_once (dirname(__FILE__)."/../includes/htmlpurifier/library/HTMLPurifier.auto.php");
 
 class FeedParser {
 

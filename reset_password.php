@@ -23,7 +23,7 @@ if (isset($_REQUEST["token"])) {
 <head>
     <title> Reset Password </title>
 <link rel="stylesheet" href="styles/user.css" >
-<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
+<script src="js/jquery.js"></script>
 <script src="js/common.js" > </script>
 </head>
 <body>

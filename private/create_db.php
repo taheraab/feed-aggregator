@@ -1,6 +1,6 @@
 <?php
 // This script creates the MySQL database schema for Feed Aggregator
-include_once "includes/util.php";
+include_once "../includes/util.php";
 
 $procedure = <<<EOP
 CREATE PROCEDURE createDB()

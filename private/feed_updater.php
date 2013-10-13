@@ -2,8 +2,10 @@
 // Ticks use required for signal handling
 declare (ticks = 1);
 // This script runs as a daemon on the server and periodically updates the feeds for all users
-include_once "classes/FeedParser.php";
-include_once "classes/FeedManager.php";
+include_once "../classes/FeedParser.php";
+include_once "../classes/FeedManager.php";
+
+$pidFile = "../files/pid";
 
 $pid = pcntl_fork();
 if ($pid == -1) {
@@ -32,7 +34,7 @@ if ($pid == -1) {
 
     
 	// Write pid to a file
-	$fd = fopen("files/pid", "c");
+	$fd = fopen($pidFile, "c");
 	if (!$fd) {
 		exit("Couldn't open pid file");
 	}
@@ -84,7 +86,7 @@ function signalHandler($sigNum) {
 
 // Remove PID file and exit with a given message
 function cleanupAndExit($msg) {
-	unlink("pid");
+	unlink($pidFile);
 	exit($msg);	
 	
 

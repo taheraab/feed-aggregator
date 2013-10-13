@@ -2,7 +2,8 @@
 <?php
 // This file is a cron task that checks if daemon is still running and restarts it if necessary
 //Check if daemon pid file exists
-$fd = fopen("pid", "r");
+$pidFile = "../files/pid";
+$fd = fopen($pidFile, "r");
 $running = false;
 if ($fd) {
 	// Get pid and send signal 0 to it to verify if it is still running

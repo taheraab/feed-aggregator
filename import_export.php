@@ -65,7 +65,7 @@ if (isset($_FILES["subscriptionsFile"])) {
 		color: rgb(255, 0, 0);
 	}
 </style>
-<script src="js/jquery-ui-1.10.2/jquery-1.9.1.js"></script>
+<script src="js/jquery.js"></script>
 <script type="text/javascript">
 <?php if (isset($importTaskExists) && $importTaskExists) {
 ?>
