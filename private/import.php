@@ -15,12 +15,12 @@ if ($feedUrls) {
   $folderManager = new FolderManager();
 
   echo "Importing...\n";
-  $errMsg = "";
   foreach ($feedUrls as $folderName => $xmlUrls) {
 		$folderId = $folderManager->folderExists($userId, $folderName);
 		if (!$folderId) $folderId = $folderManager->createFolder($userId, $folderName); 
 		if ($folderId) {
 			foreach($xmlUrls as $xmlUrl) {
+                $errMsg = "";
 				if ($feed = $feedParser->parseFeed($xmlUrl)) {
     				if (!$feedManager->createFeed($userId, $folderId, $feed)) $errMsg = "Error creating subscription, please try again";
 	  			}else $errMsg = "Invalid Atom or RSS xml";
