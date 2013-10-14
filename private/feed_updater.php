@@ -2,8 +2,8 @@
 // Ticks use required for signal handling
 declare (ticks = 1);
 // This script runs as a daemon on the server and periodically updates the feeds for all users
-include_once "../classes/FeedParser.php";
-include_once "../classes/FeedManager.php";
+include_once dirname(__FILE__)."/../classes/FeedParser.php";
+include_once dirname(__FILE__)."/../classes/FeedManager.php";
 
 $pidFile = "../files/pid";
 
