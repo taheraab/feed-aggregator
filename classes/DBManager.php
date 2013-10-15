@@ -1,6 +1,6 @@
 <?php
 
-include_once (dirname(__FILE__)."/../includes/util.php");
+include_once (dirname(__FILE__)."/../includes/constants.php");
 
 //Base class that manages DB
 class DBManager {

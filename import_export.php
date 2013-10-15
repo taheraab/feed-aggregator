@@ -2,6 +2,7 @@
 include_once "classes/OPMLReader.php";
 include_once "classes/FeedManager.php";
 include_once "classes/OPMLWriter.php";
+include_once "includes/util.php";
 
 session_start();
 if (!isset($_SESSION["currentUserId"])) {

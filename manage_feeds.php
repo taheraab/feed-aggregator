@@ -3,6 +3,7 @@ include_once "classes/FeedManager.php";
 include_once "classes/EntryManager.php";
 include_once "classes/FolderManager.php";
 include_once "classes/FeedParser.php";
+include_once "includes/util.php";
 
 session_start();
 if (!isset($_SESSION["currentUserId"])) {

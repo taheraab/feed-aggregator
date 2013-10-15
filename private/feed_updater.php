@@ -61,9 +61,9 @@ function updateFeeds() {
 	$lastCheckedAt = $now->sub(new DateInterval("PT30M")); // update every 30 minutes
 	$feedRecs = $feedManager->getFeedsToUpdate($lastCheckedAt->getTimestamp()); // Get Feeds that need update
     foreach ($feedRecs as $feedRec) {
-        echo "Parsing".$feedRec->selfLink."\n";
+  //      echo "Parsing".$feedRec->selfLink."\n";
 		if ($feed = $feedParser->parseFeed($feedRec->selfLink)) {
-            echo "Updating\n";
+    //        echo "Updating\n";
 			$feed->id = $feedRec->id;
 		    $feedManager->updateFeed(0, 0, $feed);
 		}

@@ -1,6 +1,7 @@
 <?php
 include_once "DBManager.php";
 include_once "FolderManager.php";
+include_once dirname(__FILE__)."/../includes/util.php";
 
 //Singleton that manages Users in the database
 class UserManager extends DBManager {
