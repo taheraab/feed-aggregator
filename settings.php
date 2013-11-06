@@ -39,6 +39,8 @@ if (isset($_SESSION["myAccountMsg"])) {
 	<script src="js/jquery.js"></script>
 	<script src="js/common.js"></script>
 	<script src="js/settings.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 
 </head>
 <body>	

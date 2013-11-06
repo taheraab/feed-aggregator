@@ -67,6 +67,8 @@ if (isset($_FILES["subscriptionsFile"])) {
 	}
 </style>
 <script src="js/jquery.js"></script>
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 <?php if (isset($importTaskExists) && $importTaskExists) {
 ?>

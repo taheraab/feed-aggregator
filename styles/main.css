@@ -1,45 +1,57 @@
 /* Import common styles */
 @import url("common.css");
 
-/* toolbar styles */
-#toolbar {
-	display: flex;
-	display: -webkit-flex;
-	flex-flow: row nowrap;
-	-webkit-flex-flow: row nowrap;
-
+#subsListPanelContainer {
+   padding-right: 0;
 }
 
-#toolbar > div:first-child {
-	max-width: 15em;
-    min-width: 15em;
+#itemPanelContainer {
+   padding-left: 0;
 }
 
-#subsForm {
-	font-size: smaller;
-	position: absolute;
-	border: 1px solid rgb(200, 200, 200);
-	padding: 5px;
-	background-color: rgb(255, 255,255);
-
+.list-group {
+   margin: 0;
 }
 
 
-#feedMenu {
-	flex-grow: 1;
-	-webkit-flex-grow: 1;
-
-}
-#unsubscribe {
-	-webkit-flex-grow: 3;
-	flex-grow: 3;
+.list-group-item {
+   cursor: pointer;
+   padding: 0.5em;
 }
 
-#settingsMenu {
-	flex-grow: 1;
-	-webkit-flex-grow: 1;
-
+.list-group-item.highlighted > .content{
+    font-weight: bold;
 }
+
+#subsListPanel > .panel-body {
+   padding: 0;
+}
+
+#subsListPanel > .panel-body, #itemPanel > .panel-body {
+   height: 50em;
+   overflow-y: scroll;
+}
+
+.folder {
+   /*padding-bottom: 0; */
+   padding-right: 0;
+}
+
+#more, #last {
+    height: 40em;
+}
+
+#entryList > .highlighted {
+  border-left-color: blue;
+}
+
+#entryList > .highlighted .title {
+  font-weight: bold;
+}
+#entryList > .updated {
+  background-color: rgb(245, 245, 245);
+}
+/*
 #settingsMenu > button {
 	background: url("../resources/icons.png") rgb(220, 220, 220) no-repeat 5px 2px;
 	width: 45px;
@@ -61,7 +73,7 @@
 	cursor: pointer;
 }
 
-/* styles for a collapsible navigation list*/ 
+/* styles for a collapsible navigation list
 nav > ul:first-of-type{
 	list-style-type:none;
 	padding:0;
@@ -140,7 +152,7 @@ nav > ul:first-child .unread {
 
 }
 
-/* styles for navigation and content */
+/* styles for navigation and content 
 #content {
 	display: flex;
 	display: -webkit-flex; 
@@ -259,3 +271,5 @@ nav > ul:first-child .unread {
 	display:none;
 
 }	
+
+*/

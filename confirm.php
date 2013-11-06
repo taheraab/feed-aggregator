@@ -16,7 +16,9 @@ if (isset($_GET["token"])) {
 <html>
 <head>
     <title> Confirmation </title>
-<link rel="stylesheet" href="styles/user.css" >
+    <link rel="stylesheet" href="styles/user.css" >
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 </head>
 <body>
     <?php include_once ("includes/header.php"); 

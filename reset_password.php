@@ -25,6 +25,8 @@ if (isset($_REQUEST["token"])) {
 <link rel="stylesheet" href="styles/user.css" >
 <script src="js/jquery.js"></script>
 <script src="js/common.js" > </script>
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 </head>
 <body>
     <?php include_once ("includes/header.php"); ?> 

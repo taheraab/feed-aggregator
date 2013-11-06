@@ -27,13 +27,12 @@ function EntryObj(id, status, type) {
 
 // Create the navigation menu
 $(document).ready(function(){
-	$("#unsubscribe input[type='submit']").prop("disabled", true);
 	loadFolders();
 	$("#entryList").scroll(setActiveEntry);
 	setUpdateTimer();
 	setGetFeedsTimer();
 	initialPageState = window.history.state;
-
+    console.log(initialPageState);
 });
 
 // if the response to an ajax request is not json, then page is redirected due to session timeout
@@ -65,13 +64,12 @@ function loadFolders() {
 		for (var i = 0; i < folders.length; i++) {
 			if (folders[i].name == "root" ) {
 				rootId = activeFolderId = folders[i].id;
-				content += "<li><ul id='Folder" + rootId + "'></ul></li>";
+				content += "<li id='Folder" + rootId + "' class='hide'></li>";
 			}else {
 				// Create a navigation entry for each folder 
-				content += "<li id='Folder" + folders[i].id + "' class='folder' ><div onclick='setActiveFolder(" + folders[i].id + 
-				",$(this).parent()); $(this).parent().toggleClass(\"collapsed\"); '>" + 
-				"<span></span><img src='resources/folder_icon.png' ><span>" + folders[i].name + "</span></div><ul id='folder" + 
-				folders[i].id + "'> </ul></li>";
+                content += "<li id='Folder" + folders[i].id + "' class='list-group-item folder' onclick='setActiveFolder(" + folders[i].id +
+                ", $(this)); toggleFolderState($(this));' ><span class='glyphicon glyphicon-folder-close'></span>" +
+                "&nbsp;&nbsp;<span class='content'>" + folders[i].name + "</span><ul class='list-group hide'></ul></li>";
 			}
 			
 		}	
@@ -95,45 +93,44 @@ function loadFeeds() {
 		var feedExists = false;
 		var newFeed = false;
 		for (i = 0; i < myFeeds.length; i++) { 
-			var titleClass = "";
 			var unreadCount = "";
 			if (parseInt(myFeeds[i].numUnreadEntries)) {
 				allItemsUnreadCount += parseInt(myFeeds[i].numUnreadEntries);
-				if (parseInt(myFeeds[i].numUnreadEntries) < 1000) unreadCount= "(" +  myFeeds[i].numUnreadEntries + ")";
-				else unreadCount = "(1000+)";
-				titleClass = "class = 'unread'";
+				if (parseInt(myFeeds[i].numUnreadEntries) < 1000) unreadCount= myFeeds[i].numUnreadEntries;
+				else unreadCount = "1000+";
 			}
 			// Check if feed exists
 			var $feed = $("#Feed" + myFeeds[i].id);	
 			if ($feed.length) {
 				feedExists = true;
 				if (parseInt(myFeeds[i].numUnreadEntries)) {
-					$feed.find("span[name='title']").addClass("unread");
-					$unreadCountElm = $feed.find("span:last-child");
+					$unreadCountElm = $feed.find("span.badge");
 					$unreadCountElm.data("unreadCount", myFeeds[i].numUnreadEntries);
 					$unreadCountElm.text(unreadCount);
 				}
 			} else {
-				newFeed = true;
-				var content = "<li id='Feed" + myFeeds[i].id + "' class='feed' onclick = 'setActiveFeed(" + i + ", $(this));'><img src = '" + 
-					myFeeds[i].alternateLink + "/favicon.ico'></img> <span name='title'" + titleClass + "  >" + 
-					myFeeds[i].title + " </span><span data-unread-count='" + myFeeds[i].numUnreadEntries + "' >" + unreadCount + "</span></li>";
+                var matches = myFeeds[i].alternateLink.split("/");
+				var hostname = matches[0] + "//" + matches[2];
+                newFeed = true;
+				var content = "<li id='Feed" + myFeeds[i].id + 
+                  "' class='list-group-item feed' onclick = 'setActiveFeed(" + i + ", $(this)); event.stopPropagation();'>" + 
+                  "<span class='badge' data-unread-count='" + myFeeds[i].numUnreadEntries + "'>" + unreadCount + "</span><img src='" + 
+				hostname + "/favicon.ico' width='15' height='15'></img>&nbsp;&nbsp;<span class='content'>" + myFeeds[i].title + "</span></li>";
 				if (myFeeds[i].folder_id == rootId) $feedList.append(content); 
 				else {
-					$feedList.find("#folder" + myFeeds[i].folder_id).append(content);
+					$feedList.find("#Folder" + myFeeds[i].folder_id + " > ul").append(content);
 				}
 			}
 		}
 		
 		
 		$allItems = $("#allItems");
-		$unreadCountElm = $allItems.find("span:last-child");
+		$unreadCountElm = $allItems.find("span.badge");
 		$unreadCountElm.data("unreadCount", allItemsUnreadCount);
 		//set unread count for All Items link
 		if (allItemsUnreadCount) {
-			$allItems.find("span.first-child").toggleClass("unread");
-			if (allItemsUnreadCount < 1000) $unreadCountElm.text("(" + allItemsUnreadCount + ")");
-			else $unreadCountElm.text("(1000+)");
+			if (allItemsUnreadCount < 1000) $unreadCountElm.text(allItemsUnreadCount);
+			else $unreadCountElm.text("1000+");
 		}
 
 		// If no more new feeds were added, clear GetFeedsTimer
@@ -166,11 +163,8 @@ function setActiveFeed(i, $elm) {
 		pageState.activeFeedId = myFeeds[i].id;
 		window.history.replaceState(pageState, "");
 		setActiveFolder(myFeeds[i].folder_id, $("#Folder" + myFeeds[i].folder_id));
-		$entryList.append("<h3> <a href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + " >></a></h3><p>" + myFeeds[i].subtitle + "</p><hr>");
-		$("#unsubscribe input[type='submit']").prop("disabled", false);
+		$entryList.append("<h4> <a target='_blank' href='" + myFeeds[i].alternateLink + "'>" + myFeeds[i].title + "</a></h4><p>" + myFeeds[i].subtitle + "</p>");
 	}else {
-		// In all items, disable Unsubscribe
-		$("#unsubscribe input[type='submit']").prop("disabled", true);
 		pageState.activeFeedId = 0;
 		pageState.activeFolderId = rootId;
 		window.history.replaceState(pageState, "");
@@ -180,12 +174,21 @@ function setActiveFeed(i, $elm) {
 
 // Called when a folder item is clicked
 function setActiveFolder(id, $elm) {
-	if ($activeFolder != null) $activeFolder.toggleClass("active");
+	if ($activeFolder != null) $activeFolder.toggleClass("highlighted");
 	$activeFolder = $elm;
-	$activeFolder.toggleClass("active");
+	$activeFolder.toggleClass("highlighted");
 	activeFolderId = id;
 	pageState.activeFolderId = id;
 	window.history.replaceState(pageState, "");
+}
+
+// Collapse or Expand folder 
+function toggleFolderState($elm) {
+    $icon = $elm.find("span.glyphicon");
+    $list = $elm.find("ul");
+    $icon.toggleClass("glyphicon-folder-close");
+    $icon.toggleClass("glyphicon-folder-open");
+    $list.toggleClass("hide");
 }
 
 // Load a page of entries from DB for active feed
@@ -194,7 +197,7 @@ function loadEntries() {
 
 	var feedId = (activeFeedIndex != -1)? myFeeds[activeFeedIndex].id : 0;	
 	//Remove section with id = more from entryList
-	$("section[id='more']").remove();
+	$("div.panel[id='more']").remove();
 	if ($activeEntry == null) { //if this is the first page, get unread count
 		// Get num of unread entries for this feed
 		$.getJSON("manage_feeds.php?getNumUnreadEntries&feedId=" + feedId, function(unreadCount) {
@@ -209,49 +212,50 @@ function loadEntries() {
 	$.getJSON("manage_feeds.php?getEntries&feedId=" + feedId + "&entryPageSize=" + pageSize + "&lastLoadedEntryId=" + lastLoadedEntryId,
 	 function(entries) {
 		if (!entries) {
-			$entryList.append("<section id='last'> No more Entries </section>");
+			$entryList.append("<div class='panel panel-default' id='last'><div class='panel-body'><p class='text-center'> No more Entries </p></div></div>");
 			return;
 		}
 		for (var i = 0; i < entries.length; i++) { 
 			// filter entries before adding them
-			var hidden = "";
+			var hide = "";
 			if (filter != "all") {
-				hidden = "class = 'hidden'";
+				hide = "hide";
 				if ((filter == entries[i].type || filter == entries[i].status) || (filter == "unread" && entries[i].status == 'new')) 
-					hidden = "";
+					hide = "";
 		
 			}
-			var content = "<section " + hidden + " id = 'Entry" + entries[i].id + "'><div><div><div class='title'><a target='_blank' href='" +
-				 entries[i].alternateLink + "'>" + entries[i].title + "</a></div>";
+			var updated = new Date(entries[i].updated * 1000); // convert unix timestamp into miliseconds
+			var content = "<div class='panel panel-default " + hide + "' id='Entry" + entries[i].id + 
+              "'><div class='panel-body'><small class='pull-right'>" + updated.toLocaleString() + 
+              "</small><div class='title'><a target='_blank' href='" + entries[i].alternateLink + "'>" + entries[i].title + "</a></div><div>";
 			if (activeFeedIndex == -1) {
 				// Show feed title instead of author
-				content += "<div class='author'> from  <a href='#' onclick=\"$('#Feed" + entries[i].feed_id + "').click(); return false;\">" + 
-					entries[i].feedTitle + "</a></div>";
-			}else if (entries[i].authors != "") content += "<div class='author'>by " + entries[i].authors + "</div>";
-			var updated = new Date(entries[i].updated * 1000); // convert unix timestamp into miliseconds
+				content += "<small> from  <a href='#' onclick=\"$('#Feed" + entries[i].feed_id + "').click(); return false;\">" + 
+					entries[i].feedTitle + "</a></small>";
+			}else if (entries[i].authors != "") content += "<small>by " + entries[i].authors + "</small>";
 			var checked = (entries[i].status == "unread")? "checked" : "";
-			var starred = (entries[i].type == "starred") ? "class='starred'" : "";
-			content += "</div><div class='updated'>" + updated.toLocaleString() + "</div></div>";
-			content += "<br /><div>" + entries[i].content + "</div>";
-			content += "<br /><div class='toolbar'><input type='hidden' name='id' value='" + entries[i].id + 
-				"' /><span " + starred + " onclick='setEntryStarred($(this))'></span><input type='hidden' name='type' value='" + 
-				entries[i].type + "' />" + "<span> &nbsp;&nbsp; </span><input type='checkbox' name='status' value='" + entries[i].status + 
-				"' onchange='setEntryStatus($(this));' " + checked + "  />" + 
-				"<label for='status'> Keep unread</label></div></section>";
+			var starred = (entries[i].type == "starred") ? "glyphicon-star" : "glyphicon-star-empty";
+			content += "</div><br /><div>" + entries[i].content + "</div></div>";
+			content += "<div class='panel-heading'><input type='hidden' name='id' value='" + entries[i].id + 
+				"' /><a href='#' onclick='setEntryStarred($(this)); return false;'><span class='glyphicon " + starred + 
+                "'></span></a><input type='hidden' name='type' value='" + 
+				entries[i].type + "' />" + "&nbsp;&nbsp; <label class='checkbox-inline'><input type='checkbox' name='status' value='" + 
+                entries[i].status + "' onchange='setEntryStatus($(this));' " + checked + "  />Keep unread</label></div></div>"; 
+			
 			$entryList.append(content);
 		}
 		if (entries.length) lastLoadedEntryId = entries[entries.length- 1].id;
 
 		if (entries.length < pageSize) {
 			// The last entry has been received
-			$entryList.append("<section id='last'>  No more Entries  </section>");
+			$entryList.append("<div class='panel panel-default' id='last'><div class='panel-body'><p class='text-center'> No more Entries</p> </div></div>");
 		}else {
-			$entryList.append("<section id='more'> Scroll down to view more entries </section>");
+			$entryList.append("<div class='panel panel-default' id='more'><div class='panel-body'><p class='text-center'> Scroll down to view more entries</p> </div></div>");
 
 		}
 		if ($activeEntry == null) {
 			// This is the first page
-			if (initialPageState == null) $activeEntry = $("#entryList section:first-of-type");
+			if (initialPageState == null) $activeEntry = $("#entryList div.panel").first();
 			else {
 				$activeEntry = $("#" + initialPageState.activeEntryId);
 				// scroll to active Entry
@@ -267,7 +271,6 @@ function loadEntries() {
 		}
 		initialPageState = null; // set to to null after it is used for the first time
 		window.history.replaceState(pageState, "");
-		console.log(pageState);
 	});
 }
 
@@ -281,8 +284,8 @@ function setActiveEntry() {
 		if ($activeEntry.position().top < 0) {
 			var $nextEntry = $activeEntry;
 			do {// loook for a valid next entry
-				$nextEntry = $nextEntry.next("section");
-			}while ($nextEntry.length && $nextEntry.hasClass("hidden"));
+				$nextEntry = $nextEntry.next("div.panel");
+			}while ($nextEntry.length && $nextEntry.hasClass("hide"));
 			if ($nextEntry.length) { 
 				if ($nextEntry.attr("id") == "more") {
 					// Load new entries if we've reached the bottom of scroll area
@@ -290,7 +293,7 @@ function setActiveEntry() {
 				} else {
 					$activeEntry.toggleClass("highlighted"); 
 					// Also change status to read
-					var $statusElm = $activeEntry.find(".toolbar > input[name='status']")
+					var $statusElm = $activeEntry.find(".panel-heading input[name='status']")
 					if ($statusElm.val() == "new") {
 						$statusElm.val("read");
 						// decrement unread count for active feed
@@ -306,8 +309,8 @@ function setActiveEntry() {
 		}else { 
 			var $prevEntry = $activeEntry;
 			do {// loook for a valid prev entry
-				$prevEntry = $prevEntry.prev("section");
-			}while ($prevEntry.length && $prevEntry.hasClass("hidden"));
+				$prevEntry = $prevEntry.prev("div.panel");
+			}while ($prevEntry.length && $prevEntry.hasClass("hide"));
 			// If previous entry's top is visible scroll up to previous entry
 			if ($prevEntry.length && $prevEntry.position().top > 0) {
 				// if it has been scrolled down, replace with prev entry
@@ -325,7 +328,9 @@ function setActiveEntry() {
 
 // Sets the starred value for the entry when star is clicked.
 function setEntryStarred($elm) {
-	$elm.toggleClass("starred");
+    var $icon = $elm.find("span.glyphicon");
+	$icon.toggleClass("glyphicon-star");
+    $icon.toggleClass("glyphicon-star-empty");
 	$inputElm = $elm.next();
 	if ($inputElm.val() == "unstarred") $inputElm.val("starred"); //  toggle value attr for the related input element
 		else $inputElm.val("unstarred");
@@ -342,44 +347,36 @@ function setEntryStatus($elm) {
 		$elm.val("read");
 		updateUnreadCount("decrement");
 	}
-	$elm.parent().parent().addClass("updated");
+	$elm.parent().parent().parent().addClass("updated");
 }
 
 // Increments/Decrements/Sets unread count for active Feed element
 function updateUnreadCount(option, value) {
 	if (typeof(value) === "undefined") value = 0;
 	value = parseInt(value);
-	var $spanElm = $activeFeed.find("span:last-child");
+	var $spanElm = $activeFeed.find("span.badge");
 	var count = parseInt($spanElm.data("unreadCount")); 		
-	if (option == "decrement") {
+    if (option == "decrement") {
 		if (count) {
 			count--;
 			if (count) 
-				$spanElm.text("(" + count + ")");
+				$spanElm.text(count);
 			else {
 				$spanElm.text("");
-				$spanElm.prev().removeClass("unread"); // remove unread style for title
 			}
 			$spanElm.data("unreadCount", count);
 		}
 	}else if (option == "increment") {
-		if (!count) $spanElm.prev().addClass("unread"); // add unread style for title
 		count ++;
-		if (count < 1000) $spanElm.text("(" + count + ")");
-		else $spanElm.text("(1000+)");
+		if (count < 1000) $spanElm.text(count);
+		else $spanElm.text("1000+");
 		$spanElm.data("unreadCount", count);
 	}else if (option == "set") {
 		if (value) {
-			if (value < 1000) $spanElm.text("(" + value + ")");
-			else $spanElm.text("(1000+)");
+			if (value < 1000) $spanElm.text(value);
+			else $spanElm.text("1000+");
 		}else { 
 			$spanElm.text("");
-		}
-		if (value && !count) {
-			$spanElm.prev().addClass("unread");
-		}
-		if (!value && count) {
-			$spannElm.prev().removeclass("unread");
 		}
 		$spanElm.data("unreadCount", value);
 	}
@@ -388,11 +385,11 @@ function updateUnreadCount(option, value) {
 
 // Send update entries request to server
 function updateEntries() {
-	$updatedEntryList = $("#entryList section.updated");
+	$updatedEntryList = $("#entryList div.updated");
 	var entriesToUpdate = new Array();
 	$updatedEntryList.each(function() {
-		var entry = new EntryObj($(this).find(".toolbar > input[name='id']").val(), $(this).find(".toolbar > input[name='status']").val(),
-						$(this).find(".toolbar > input[name='type']").val());
+		var entry = new EntryObj($(this).find(".panel-heading > input[name='id']").val(), $(this).find(".panel-heading input[name='status']").val(),
+						$(this).find(".panel-heading > input[name='type']").val());
 		entriesToUpdate.push(entry);
 		$(this).removeClass("updated");
 	});
@@ -413,33 +410,35 @@ function updateEntries() {
 // View filtered by starred, read, unread
 function filterView() {
 	if (filter == "all") {
-		$("#entryList section").removeClass("hidden");
+		$("#entryList div.panel").removeClass("hide");
 	}else {
-		$("#entryList section").addClass("hidden");
-		$("#entryList input[value='" + filter + "']").parent().parent().removeClass("hidden");
-		if (filter == "unread") $("#entryList input[value='new']").parent().parent().removeClass("hidden");
-		$("#entryList section#more").removeClass("hidden");
-		$("#entryList section#last").removeClass("hidden");
+		$("#entryList div.panel").addClass("hide");
+        if (filter == "starred") $("#entryList input[value='starred']").parent().parent().removeClass("hide");
+		else $("#entryList input[value='" + filter + "']").parent().parent().parent().removeClass("hide");
+		if (filter == "unread") $("#entryList input[value='new']").parent().parent().parent().removeClass("hide");
+		$("#entryList #more").removeClass("hide");
+		$("#entryList #last").removeClass("hide");
 	}
 
 }
 
 
-// Called when new folder icon is clicked
-function createFolder() {
-	// Ask for folder name 
-	var name = window.prompt("Enter new folder name", "New Folder");
-	if ((name != null) && (name != "") ) {
-		// Add folder to DB and make it active
-		$.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
-			if (!id) {
-				alert ("Cannot create folder with the given name, please try again");
-				
-			}else {
-				$("#feedList").append("<li class='folder' ><div onclick='setActiveFolder(" + id + ",$(this).parent());'>" + 
-				"<span></span><img src='resources/folder_icon.png' ><span>" + name + "</span></div><ul id='folder" + id + "'> </ul></li>");
-				$("#feedList > li:last-child > div").click();
-			}
-		});
-	}
+// Called when new folder dialog is submitted
+function createFolder($dialog) {
+    var $errMsg = $("#addFolderDialog .text-danger");
+    var name = $("#folderName").val(); 
+      // Add folder to DB and make it active
+	$.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
+		if (!id) {
+			$errMsg.text("Cannot create folder with the given name, please try again");
+			
+		}else {
+	        var content = "<li id='Folder" + id + "' class='list-group-item folder' onclick='setActiveFolder(" + id +
+               ", $(this)); toggleFolderState($(this));' ><span class='glyphicon glyphicon-folder-close'></span>" +
+               "&nbsp;&nbsp;<span class='content'>" + name + "</span><ul class='list-group hide'></ul></li>";
+			$("#feedList > li.folder").last().after(content);
+		    setActiveFolder(id, $("#Folder" + id));
+            $("#addFolderDialog").modal("hide");
+		}
+	});
 }

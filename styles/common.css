@@ -1,45 +1,21 @@
-//* document styles */
-html, body {
-    height: 100%;
-    width: 100%;
-	font-family: "Times New Roman", serif;
+//* common styles */
+
+.panel-default > .scrollable {
+    height: 50em;
+    overflow-y: scroll;
 }
 
-.hidden {
-    display:none;
-
+.navbar-brand {
+    font-family: "Vast Shadow", cursive;
+    font-size: 28px;
 }
-.errMsg {
-    color: rgb(255, 0, 0);
-
-}
-
-.link {
-	cursor: pointer;
-	text-decoration: underline;
+        
+.navbar {
+    margin-bottom: 0.3em;
+    background-color: #FFD5B7;
 }
 
-header {
-    display: flex;
-    display: -webkit-flex;
-    flex-flow: row nowrap;
-    -webkit-flex-flow: row nowrap;
-	align-items: center;
-	-webkit-align-items: center;
-	justify-content: space-between;
-	-webkit-justify-content: space-between;
-	margin-bottom: 0.5em;
-	border: 0px solid transparent;
-	border-bottom: 1px solid blue;
-	border-image: -webkit-linear-gradient(right, red, orange, yellow, green, blue, indigo, violet) 1 1 stretch;
-	border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1 1 stretch;
-	
+.panel-default > .coloredHeader, .modal-content > .coloredHeader {
+    background-color: #BDEEE7;
 }
-
-
-header #welcome > span {
-    margin-right: 20px;
-
-}
-
 

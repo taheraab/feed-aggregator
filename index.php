@@ -15,77 +15,120 @@ if (isset($_SESSION["subsErrMsg"])) {
 	unset($_SESSION["subsErrMsg"]);
 }
 
-if (isset($_SESSION["unsubscribeErrMsg"])) {
-	$unsubscribeErrMsg = $_SESSION["unsubscribeErrMsg"];
-	unset($_SESSION["unsubscribeErrMsg"]);
-}
 
 ?>
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Feed Reader</title>
 	<meta charset="utf-8" >
-	<title>Feed Reader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="//code.jquery.com/jquery.js"></script>
+    <!-- Bootstrap -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="styles/main.css">
-	<script src="js/jquery.js"></script>
+     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 	<script src="js/main.js"></script>
-
 </head>
 <body>	
+    <div class="container">
 	<?php require_once "includes/header.php"; ?>
-	<div id="toolbar">
-		<div>
-			<div class="errMsg"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
-			<button type="button" name="subscribe" onclick="$('#subsForm').toggleClass('hidden');">Subscribe </button><br />
-			<form class="hidden" id="subsForm" method="post" action="manage_feeds.php?subscribeToFeed" 
-				onsubmit="$(this).find('input[name=\'folderId\']').val(activeFolderId);" >
-				<input type='hidden' name='folderId' />
-				Website or Atom/RSS Link: <br /><input type="url" name="url" required />
-				<input type="submit" value="Submit" />
-			</form> 
-		</div>
-		<div id="feedMenu">
-			View &nbsp;<input type="radio" onchange = "filter = 'all'; filterView();" name="filter" checked >All </input> 
-			<input type="radio" onchange= "filter = 'starred'; filterView();" name="filter"  >Starred</input>
-			<input type="radio" onchange= "filter = 'unread'; filterView();" name="filter"  >Unread</input>
-			<input type="radio" onchange= "filter= 'read'; filterView();" name = "filter"  >Read</input>
-		</div>
-		<div id="unsubscribe">
-			<form method="post" action="manage_feeds.php?unsubscribeFeed" 
-				onsubmit="$(this).find('input[name=\'feedId\']').val(myFeeds[activeFeedIndex].id);" >
-				<input type="hidden" name="feedId" ></input>
-				<input type="submit" value= "Unsubscribe" ></input>
-			</form>
-			<span class="errMsg"><?php if (isset($unsubscribeErrMsg)) echo $unsubscribeErrMsg ?></span>
-		</div>
-		<div id="settingsMenu">
-			<button type="button" onclick = "$(this).next().toggleClass('hidden');"> </button>
-			<ul class="hidden"> 
-				<li onclick = "window.location = 'settings.php';">Reader settings</li>
-			</ul>
-		</diV>
-		
-	</div>
-	<div id="content">
-		<article id="entryList">
-			<p> You are currently not subscribed to any Feeds. 
-				<a href="settings.php?import">Import</a> an OPML file</a> or 
-				<span class="link" onclick="$('button[name=\'subscribe\']').click();" >Subscribe</span> to a feed.
-			</p> 
-		</article>
-		<nav>
-			<p><a href="index.php"> Home </a></p>
-			<p id="allItems" onclick = "setActiveFeed(-1, $(this));"> <span> All Items </span> 
-					<span></span></p>
-			<ul>
-				<li id="subscriptions" ><div onclick="$(this).parent().toggleClass('collapsed');"> <span ></span><span>Subscriptions</span></div>
-					<img id="newFolder" src="resources/new_folder_icon.png" onclick="createFolder();" /> 
-					<ul id="feedList">
-					</ul>
-				</li>
-			</ul>
-		</nav>
-	</div>
+  <div class="row">
+    <div id ="subsListPanelContainer" class="col-md-3">
+     <div class="text-danger"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
+     <div id="subsListPanel" class="panel panel-default">
+       <div class="panel-heading dropdown coloredHeader">
+            Subscriptions
+          <div class="btn-group pull-right">
+            <button type="button" class="dropdown-toggle btn btn-default btn-xs" data-toggle="dropdown" >Add <span class="caret"></span></button>
+            <ul class="dropdown-menu" role="menu">
+             <li><a data-toggle="modal" href="#addSubsDialog">New subscription</a></li>
+             <li><a data-toggle="modal" href="#addFolderDialog" >New folder</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel-body"> 
+            <ul id="feedList" class="list-group">
+              <li id="allItems" class="list-group-item" onclick="setActiveFeed(-1, $(this));"><span class="badge"></span>All Items</li>
+            </ul> 
+        </div>
+      </div>
+    </div>
+    <div id="itemPanelContainer" class="col-md-9">
+      <div id="itemPanel" class="panel panel-default">
+        <div class="panel-heading coloredHeader">
+           View: &nbsp;
+           <div class="btn-group" data-toggle="buttons">
+             <label class="btn btn-default btn-xs active" >
+               <input name="filter" type="radio" onchange="filter='all'; filterView();" checked>&nbsp;All&nbsp;</input>
+             </label>
+             <label class="btn btn-default btn-xs" >
+               <input name="filter" type="radio" onchange="filter='read'; filterView();">&nbsp;Read&nbsp;</input>
+             </label>
+             <label class="btn btn-default btn-xs" >
+               <input name="filter" type="radio" onchange="filter='unread'; filterView();">&nbsp;Unread&nbsp;</input>
+             </label>
+             <label class="btn btn-default btn-xs" >
+               <input name="filter" type="radio" onchange="filter='starred'; filterView();">&nbsp;Starred&nbsp;</input>
+             </label>
+           </div>
+        </div>
+        <div id="entryList" class="panel-body">
+          <p> You do not have any subscriptions currently.<a href="settings.php?import">Import</a> an OPML file or 
+            <a data-toggle="modal" href="#addSubsDialog">Subscribe</a> to a feed.</p>
+       </div>
+
+     </div> <!-- item panel -->
+   </div> <!-- item panel container -->
+  </div> <!-- row -->
+ </div> <!-- container -->
+  <!-- Modal dialogs -->
+  <div class="modal" id="addSubsDialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header coloredHeader">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Add Subscription</h4>
+        </div>
+        <div class="modal-body">
+          <form id="subsForm" role="form" method="post" action="manage_feeds.php?subscribeToFeed" 
+            onsubmit="$(this).find('input[name=\'folderId\']').val(activeFolderId);">
+            <div class="form-group">
+              <label  for="subsUrl">HTML/RSS/Atom Link: </label>
+              <input type="url" id="subsUrl" name="url" class="form-control" placeholder="subscription url" required />
+              <input type="hidden" name="folderId" />    
+            </div>
+          </form>  
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <input type="submit" class="btn btn-primary" form="subsForm" value="Subscribe" />
+        </div>
+      </div>
+    </div>
+  </div>
+   <!-- Modal dialogs -->
+  <div class="modal" id="addFolderDialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header coloredHeader">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Add Folder</h4>
+        </div>
+        <div class="modal-body">
+          <div class='text-danger'></div>
+          <label for="folderName">Folder Name: </label>
+          <input type="text" id="folderName" class="form-control" placeholder="NewFolderName" required />
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" onclick="createFolder();" class="btn btn-primary">Add</button>
+        </div>    
+      </div>
+    </div>
+  </div>
 </body>
 </html>
 

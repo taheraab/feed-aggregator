@@ -13,8 +13,8 @@ $(document).ready(function() {
 
 
 function activateSection($elm) {
-	if ($activeSection != null) $activeSection.addClass("hidden");
-	$elm.removeClass("hidden");
+	if ($activeSection != null) $activeSection.addClass("hide");
+	$elm.removeClass("hide");
 	$activeSection = $elm;
 }
 
