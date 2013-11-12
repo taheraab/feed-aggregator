@@ -64,12 +64,12 @@ function loadFolders() {
 		for (var i = 0; i < folders.length; i++) {
 			if (folders[i].name == "root" ) {
 				rootId = activeFolderId = folders[i].id;
-				content += "<li id='Folder" + rootId + "' class='hide'></li>";
+				content += "<li id='Folder" + rootId + "' class='hidden'></li>";
 			}else {
 				// Create a navigation entry for each folder 
                 content += "<li id='Folder" + folders[i].id + "' class='list-group-item folder' onclick='setActiveFolder(" + folders[i].id +
                 ", $(this)); toggleFolderState($(this));' ><span class='glyphicon glyphicon-folder-close'></span>" +
-                "&nbsp;&nbsp;<span class='content'>" + folders[i].name + "</span><ul class='list-group hide'></ul></li>";
+                "&nbsp;&nbsp;<span class='content'>" + folders[i].name + "</span><ul class='list-group hidden'></ul></li>";
 			}
 			
 		}	
@@ -188,7 +188,7 @@ function toggleFolderState($elm) {
     $list = $elm.find("ul");
     $icon.toggleClass("glyphicon-folder-close");
     $icon.toggleClass("glyphicon-folder-open");
-    $list.toggleClass("hide");
+    $list.toggleClass("hidden");
 }
 
 // Load a page of entries from DB for active feed
@@ -217,15 +217,15 @@ function loadEntries() {
 		}
 		for (var i = 0; i < entries.length; i++) { 
 			// filter entries before adding them
-			var hide = "";
+			var hidden = "";
 			if (filter != "all") {
-				hide = "hide";
+				hidden = "hidden";
 				if ((filter == entries[i].type || filter == entries[i].status) || (filter == "unread" && entries[i].status == 'new')) 
-					hide = "";
+					hidden = "";
 		
 			}
 			var updated = new Date(entries[i].updated * 1000); // convert unix timestamp into miliseconds
-			var content = "<div class='panel panel-default " + hide + "' id='Entry" + entries[i].id + 
+			var content = "<div class='panel panel-default " + hidden + "' id='Entry" + entries[i].id + 
               "'><div class='panel-body'><small class='pull-right'>" + updated.toLocaleString() + 
               "</small><div class='title'><a target='_blank' href='" + entries[i].alternateLink + "'>" + entries[i].title + "</a></div><div>";
 			if (activeFeedIndex == -1) {
@@ -285,7 +285,7 @@ function setActiveEntry() {
 			var $nextEntry = $activeEntry;
 			do {// loook for a valid next entry
 				$nextEntry = $nextEntry.next("div.panel");
-			}while ($nextEntry.length && $nextEntry.hasClass("hide"));
+			}while ($nextEntry.length && $nextEntry.hasClass("hidden"));
 			if ($nextEntry.length) { 
 				if ($nextEntry.attr("id") == "more") {
 					// Load new entries if we've reached the bottom of scroll area
@@ -310,7 +310,7 @@ function setActiveEntry() {
 			var $prevEntry = $activeEntry;
 			do {// loook for a valid prev entry
 				$prevEntry = $prevEntry.prev("div.panel");
-			}while ($prevEntry.length && $prevEntry.hasClass("hide"));
+			}while ($prevEntry.length && $prevEntry.hasClass("hidden"));
 			// If previous entry's top is visible scroll up to previous entry
 			if ($prevEntry.length && $prevEntry.position().top > 0) {
 				// if it has been scrolled down, replace with prev entry
@@ -410,14 +410,14 @@ function updateEntries() {
 // View filtered by starred, read, unread
 function filterView() {
 	if (filter == "all") {
-		$("#entryList div.panel").removeClass("hide");
+		$("#entryList div.panel").removeClass("hidden");
 	}else {
-		$("#entryList div.panel").addClass("hide");
-        if (filter == "starred") $("#entryList input[value='starred']").parent().parent().removeClass("hide");
-		else $("#entryList input[value='" + filter + "']").parent().parent().parent().removeClass("hide");
-		if (filter == "unread") $("#entryList input[value='new']").parent().parent().parent().removeClass("hide");
-		$("#entryList #more").removeClass("hide");
-		$("#entryList #last").removeClass("hide");
+		$("#entryList div.panel").addClass("hidden");
+        if (filter == "starred") $("#entryList input[value='starred']").parent().parent().removeClass("hidden");
+		else $("#entryList input[value='" + filter + "']").parent().parent().parent().removeClass("hidden");
+		if (filter == "unread") $("#entryList input[value='new']").parent().parent().parent().removeClass("hidden");
+		$("#entryList #more").removeClass("hidden");
+		$("#entryList #last").removeClass("hidden");
 	}
 
 }
@@ -426,19 +426,30 @@ function filterView() {
 // Called when new folder dialog is submitted
 function createFolder($dialog) {
     var $errMsg = $("#addFolderDialog .text-danger");
-    var name = $("#folderName").val(); 
+    var name = $("#addFolderDialog .folderName").val(); 
+    if (name != "") {
       // Add folder to DB and make it active
-	$.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
+      $.getJSON("manage_feeds.php?createFolder&name=" + name, function (id) {
 		if (!id) {
 			$errMsg.text("Cannot create folder with the given name, please try again");
 			
 		}else {
 	        var content = "<li id='Folder" + id + "' class='list-group-item folder' onclick='setActiveFolder(" + id +
                ", $(this)); toggleFolderState($(this));' ><span class='glyphicon glyphicon-folder-close'></span>" +
-               "&nbsp;&nbsp;<span class='content'>" + name + "</span><ul class='list-group hide'></ul></li>";
+               "&nbsp;&nbsp;<span class='content'>" + name + "</span><ul class='list-group hidden'></ul></li>";
 			$("#feedList > li.folder").last().after(content);
 		    setActiveFolder(id, $("#Folder" + id));
             $("#addFolderDialog").modal("hide");
 		}
-	});
+	  });
+    }
 }
+
+// Initialize and show confirm dialog
+function showAddSubsDialog() {
+  var $addSubsDialog = $("#addSubsDialog");
+  $addSubsDialog.find(".subsUrl").val("");
+  $addSubsDialog.modal("show");
+
+}
+

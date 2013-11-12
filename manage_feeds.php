@@ -149,9 +149,8 @@ if (isset($_GET["getFeeds"])) {
     foreach ($_POST["folderIds"] as $folderId) {
 	    $folderId = filter_var($folderId, FILTER_SANITIZE_NUMBER_INT);
 		if (!$folderManager->deleteFolder($_SESSION["currentUserId"], $folderId)) 
-			$errMsg = "Unsubscribe for some or all feeds failed, please try again";
+			$errMsg = "Failed to delete one or more folders, please try again";
     }
-	$errMsg = "something";
 	if (isset($errMsg)) $_SESSION["foldersErrMsg"] = $errMsg;
  	header("Location: ".createRedirectURL("settings.php?folders"));
     exit;

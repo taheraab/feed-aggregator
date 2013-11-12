@@ -1,9 +1,4 @@
-//* common styles */
-
-.panel-default > .scrollable {
-    height: 50em;
-    overflow-y: scroll;
-}
+/* common styles */
 
 .navbar-brand {
     font-family: "Vast Shadow", cursive;
@@ -15,7 +10,12 @@
     background-color: #FFD5B7;
 }
 
-.panel-default > .coloredHeader, .modal-content > .coloredHeader {
+.nav-tabs > li.active > a,
+.nav-tabs > li > a:hover,
+.nav-tabs > li > a:focus, 
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:hover,
+.panel > .coloredHeader, .modal-content > .coloredHeader {
     background-color: #BDEEE7;
 }
 

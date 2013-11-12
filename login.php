@@ -21,6 +21,7 @@ if (isset($_SESSION["currentUserId"])) {
 	<title> Login to Feed Reader </title>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="styles/common.css" >
     <script src="//code.jquery.com/jquery.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
@@ -63,12 +64,12 @@ if (isset($_SESSION["currentUserId"])) {
          </div>
        </div>
      <!-- register panel -->
-      <div id="register" class="panel panel-default hide">
+      <div id="register" class="panel panel-default hidden">
          <div class="panel-heading coloredHeader">
             Register
          </div>
          <div class="panel-body"> 
-          <form class="form-horizontal" role="form" method="post" action="manage_user.php?register" onsubmit="validatePasswords($(this));">
+          <form class="form-horizontal" role="form" method="post" action="manage_user.php?register" onsubmit="validatePasswords($(this), $('.text-danger'));">
               <div class="form-group">
               <label class="col-md-3 control-label" for="firstname" > Firstname</label>
               <div class="col-md-9">
@@ -111,7 +112,7 @@ if (isset($_SESSION["currentUserId"])) {
        </div>
  
      <!-- reset password panel -->
-       <div id="resetPassword" class="panel panel-default hide">
+       <div id="resetPassword" class="panel panel-default hidden">
          <div class="panel-heading coloredHeader">
             Reset Password
          </div>

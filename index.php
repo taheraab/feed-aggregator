@@ -30,7 +30,8 @@ if (isset($_SESSION["subsErrMsg"])) {
     <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="styles/main.css">
      <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-	<script src="js/main.js"></script>
+	<script src="js/common.js"></script>
+    <script src="js/main.js"></script>
 </head>
 <body>	
     <div class="container">
@@ -44,8 +45,8 @@ if (isset($_SESSION["subsErrMsg"])) {
           <div class="btn-group pull-right">
             <button type="button" class="dropdown-toggle btn btn-default btn-xs" data-toggle="dropdown" >Add <span class="caret"></span></button>
             <ul class="dropdown-menu" role="menu">
-             <li><a data-toggle="modal" href="#addSubsDialog">New subscription</a></li>
-             <li><a data-toggle="modal" href="#addFolderDialog" >New folder</a></li>
+             <li><a href="#" onclick="showAddSubsDialog(); return false;">New subscription</a></li>
+             <li><a href="#" onclick="showAddFolderDialog(); return false;">New folder</a></li>
             </ul>
           </div>
         </div>
@@ -77,14 +78,14 @@ if (isset($_SESSION["subsErrMsg"])) {
         </div>
         <div id="entryList" class="panel-body">
           <p> You do not have any subscriptions currently.<a href="settings.php?import">Import</a> an OPML file or 
-            <a data-toggle="modal" href="#addSubsDialog">Subscribe</a> to a feed.</p>
+            <a href="#" onclick="showAddSubsDialog(); return false;">Subscribe</a> to a feed.</p>
        </div>
 
      </div> <!-- item panel -->
    </div> <!-- item panel container -->
   </div> <!-- row -->
  </div> <!-- container -->
-  <!-- Modal dialogs -->
+  <!-- Add subscription dialog -->
   <div class="modal" id="addSubsDialog">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -96,8 +97,8 @@ if (isset($_SESSION["subsErrMsg"])) {
           <form id="subsForm" role="form" method="post" action="manage_feeds.php?subscribeToFeed" 
             onsubmit="$(this).find('input[name=\'folderId\']').val(activeFolderId);">
             <div class="form-group">
-              <label  for="subsUrl">HTML/RSS/Atom Link: </label>
-              <input type="url" id="subsUrl" name="url" class="form-control" placeholder="subscription url" required />
+              <label for="su" >HTML/RSS/Atom Link:</label> 
+              <input id="su" type="url" name="url" class="form-control subsUrl" value=""  placeholder="subscription url" required />
               <input type="hidden" name="folderId" />    
             </div>
           </form>  
@@ -109,26 +110,8 @@ if (isset($_SESSION["subsErrMsg"])) {
       </div>
     </div>
   </div>
-   <!-- Modal dialogs -->
-  <div class="modal" id="addFolderDialog">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header coloredHeader">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Add Folder</h4>
-        </div>
-        <div class="modal-body">
-          <div class='text-danger'></div>
-          <label for="folderName">Folder Name: </label>
-          <input type="text" id="folderName" class="form-control" placeholder="NewFolderName" required />
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" onclick="createFolder();" class="btn btn-primary">Add</button>
-        </div>    
-      </div>
-    </div>
-  </div>
+   <!-- Add folder dialog -->
+  <?php include_once "includes/dialogs.php"; ?>
 </body>
 </html>
 

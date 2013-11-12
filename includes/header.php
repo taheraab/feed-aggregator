@@ -7,7 +7,7 @@
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
     </button>
-    <a class="navbar-brand" href="index.php">Feed Reader</a>
+    <a class="navbar-brand" href="index.php" data-toggle="tooltip" title="Home" >Feed Reader</a>
   </div>
 <?php
 	if (isset($_SESSION["currentUserId"])) {
@@ -18,7 +18,7 @@
     <ul class="nav navbar-nav navbar-right">
       <li><p class="navbar-text"> <?php echo "Signed in as ".$_SESSION["currentUsername"].
         " &nbsp;(<a href='manage_user.php?logout'>Signout</a>)&nbsp; &nbsp;" ?></p></li>
-      <li><a href="settings.php">
+      <li><a href="settings.php" data-toggle="tooltip" title="Settings">
           <span class="glyphicon glyphicon-cog"></span>
         </a>
       </li>
