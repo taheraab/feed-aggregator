@@ -33,6 +33,7 @@ $(document).ready(function(){
 	setGetFeedsTimer();
 	initialPageState = window.history.state;
     console.log(initialPageState);
+ 
 });
 
 // if the response to an ajax request is not json, then page is redirected due to session timeout
@@ -237,10 +238,10 @@ function loadEntries() {
 			var starred = (entries[i].type == "starred") ? "glyphicon-star" : "glyphicon-star-empty";
 			content += "</div><br /><div>" + entries[i].content + "</div></div>";
 			content += "<div class='panel-heading'><input type='hidden' name='id' value='" + entries[i].id + 
-				"' /><a href='#' onclick='setEntryStarred($(this)); return false;'><span class='glyphicon " + starred + 
+				"' ><a href='#' onclick='setEntryStarred($(this)); return false;'><span class='glyphicon " + starred + 
                 "'></span></a><input type='hidden' name='type' value='" + 
-				entries[i].type + "' />" + "&nbsp;&nbsp; <label class='checkbox-inline'><input type='checkbox' name='status' value='" + 
-                entries[i].status + "' onchange='setEntryStatus($(this));' " + checked + "  />Keep unread</label></div></div>"; 
+				entries[i].type + "' >" + "&nbsp;&nbsp; <label class='checkbox-inline'><input type='checkbox' name='status' value='" + 
+                entries[i].status + "' onchange='setEntryStatus($(this));' " + checked + "  >Keep unread</label></div></div>"; 
 			
 			$entryList.append(content);
 		}

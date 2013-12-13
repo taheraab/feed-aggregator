@@ -69,7 +69,7 @@ if (isset($_SESSION["currentUserId"])) {
             Register
          </div>
          <div class="panel-body"> 
-          <form class="form-horizontal" role="form" method="post" action="manage_user.php?register" onsubmit="validatePasswords($(this), $('.text-danger'));">
+          <form class="form-horizontal" role="form" method="post" action="manage_user.php?register" onsubmit="return validatePasswords($(this), $('.text-danger'));">
               <div class="form-group">
               <label class="col-md-3 control-label" for="firstname" > Firstname</label>
               <div class="col-md-9">

@@ -32,12 +32,21 @@
    overflow-y: scroll;
 }
 
+#itemPanel .panel-heading {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
 .folder {
    padding-right: 0;
 }
 
 #more, #last {
     height: 40em;
+}
+
+#entryList .title {
+    font-size: 1.2em;
 }
 
 #entryList > .highlighted {

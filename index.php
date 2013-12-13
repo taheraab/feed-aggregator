@@ -27,7 +27,7 @@ if (isset($_SESSION["subsErrMsg"])) {
     <script src="//code.jquery.com/jquery.js"></script>
     <!-- Bootstrap -->
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Oleo+Script+Swash+Caps' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="styles/main.css">
      <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 	<script src="js/common.js"></script>
@@ -40,13 +40,14 @@ if (isset($_SESSION["subsErrMsg"])) {
     <div id ="subsListPanelContainer" class="col-md-3">
      <div class="text-danger"><?php if (isset($subsErrMsg)) echo $subsErrMsg; ?></div>
      <div id="subsListPanel" class="panel panel-default">
-       <div class="panel-heading dropdown coloredHeader">
-            Subscriptions
-          <div class="btn-group pull-right">
-            <button type="button" class="dropdown-toggle btn btn-default btn-xs" data-toggle="dropdown" >Add <span class="caret"></span></button>
+       <div class="panel-heading coloredHeader">
+          Subscriptions
+          <div class="dropdown pull-right">
+            <a class="dropdown-toggle" href="#" data-toggle="dropdown" title="Add new subscription/folder" >
+                <span class="glyphicon glyphicon-plus"></span></a>
             <ul class="dropdown-menu" role="menu">
-             <li><a href="#" onclick="showAddSubsDialog(); return false;">New subscription</a></li>
-             <li><a href="#" onclick="showAddFolderDialog(); return false;">New folder</a></li>
+             <li><a href="#" onclick="showAddSubsDialog(); return false;">Add subscription</a></li>
+             <li><a href="#" onclick="showAddFolderDialog(); return false;">Add folder</a></li>
             </ul>
           </div>
         </div>
@@ -62,16 +63,16 @@ if (isset($_SESSION["subsErrMsg"])) {
         <div class="panel-heading coloredHeader">
            View: &nbsp;
            <div class="btn-group" data-toggle="buttons">
-             <label class="btn btn-default btn-xs active" >
+             <label class="btn btn-default btn-sm active" >
                <input name="filter" type="radio" onchange="filter='all'; filterView();" checked>&nbsp;All&nbsp;</input>
              </label>
-             <label class="btn btn-default btn-xs" >
+             <label class="btn btn-default btn-sm" >
                <input name="filter" type="radio" onchange="filter='read'; filterView();">&nbsp;Read&nbsp;</input>
              </label>
-             <label class="btn btn-default btn-xs" >
+             <label class="btn btn-default btn-sm" >
                <input name="filter" type="radio" onchange="filter='unread'; filterView();">&nbsp;Unread&nbsp;</input>
              </label>
-             <label class="btn btn-default btn-xs" >
+             <label class="btn btn-default btn-sm" >
                <input name="filter" type="radio" onchange="filter='starred'; filterView();">&nbsp;Starred&nbsp;</input>
              </label>
            </div>

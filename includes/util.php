@@ -1,10 +1,6 @@
 <?php
 include_once "PHPMailer/class.phpmailer.php";
 include_once "constants.php";
-$smtpHost = "smtp.gmail.com";
-$smtpPort = 587;
-$smtpUsername = "";
-$smtpPassword = "";
 
 function createRedirectURL($path) {
 	$url = ((isset($_SERVER["HTTPS"])) && ($_SERVER["HTTPS"] == "on")) ? "https://" : "http://";
@@ -17,14 +13,13 @@ function sendHTMLMail($emailId, $username, $msg) {
 	$mail = new PHPMailer(true); // the true param means it will throw exceptions on errors, which we need to catch
 
     $mail->IsSMTP(); // telling the class to use SMTP
-
     try {
       $mail->SMTPAuth   = true;                  // enable SMTP authentication
       $mail->SMTPSecure = "tls";                 // sets the prefix to the servier
-      $mail->Host       = $smtpHost;     // sets GMAIL as the SMTP server
-      $mail->Port       = $smtpPort;                   // set the SMTP port for the GMAIL server
-      $mail->Username   = $smtpUsername;  // GMAIL username
-      $mail->Password   = $smtpPassword;            // GMAIL password
+      $mail->Host       = SMTP_HOST;     // sets GMAIL as the SMTP server
+      $mail->Port       = SMTP_PORT;                   // set the SMTP port for the GMAIL server
+      $mail->Username   = SMTP_USERNAME;  // GMAIL username
+      $mail->Password   = SMTP_PASSWORD;            // GMAIL password
       $mail->AddAddress($emailId, $username);
       $mail->SetFrom('admin@feedreader.com', 'Feed Reader');
       $mail->Subject = 'Email confirmation for your account';

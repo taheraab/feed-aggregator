@@ -1,8 +1,8 @@
 /* common styles */
 
 .navbar-brand {
-    font-family: "Vast Shadow", cursive;
-    font-size: 28px;
+    font-family: "Oleo Script Swash Caps", cursive;
+    font-size: 30px;
 }
         
 .navbar {
@@ -19,3 +19,14 @@
     background-color: #BDEEE7;
 }
 
+.coloredHeader .btn,
+.coloredHeader .form-control
+{
+    background-color: #97e6da;
+}
+
+.coloredHeader .btn:hover,
+.coloredHeader .btn:focus,
+.coloredHeader .btn.active {
+    background-color: #8fd9ce;
+}

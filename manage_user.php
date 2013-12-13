@@ -107,13 +107,14 @@ if (isset($_REQUEST["login"])) {
 		$password = filter_var($_POST["password"], FILTER_SANITIZE_STRING);
 		if (empty($password)) $errMsg = "Password cannot be empty";
 		else if (strlen($password) < 8) $errMsg = "Password must be 8 or more chars long";
-		if ($userManager->reAuthenticateUser($_SESSION["currentUserId"], $currentPassword)) {
+		else {
+          if ($userManager->reAuthenticateUser($_SESSION["currentUserId"], $currentPassword)) {
 			// if current password works, change password
 			if ($userManager->changePassword($_SESSION["currentUserId"], $password)) $msg = "Password changed successfully.";
 			else $errMsg = "Couldn't change password, try again";
 
-		}else $errMsg = "Authentication failed, try again";
-
+		  }else $errMsg = "Authentication failed, try again";
+        }
 		if (isset($errMsg)) $_SESSION["myAccountErrMsg"] = $errMsg;
 		else if (isset($msg)) $_SESSION["myAccountMsg"] = $msg;	
 		header("Location: ".createRedirectURL("settings.php?myAccount"));

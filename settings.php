@@ -38,7 +38,7 @@ if (isset($_SESSION["myAccountMsg"])) {
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="//code.jquery.com/jquery.js"></script>
 	<!-- Bootstrap -->	
-    <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Oleo+Script+Swash+Caps' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<link rel="stylesheet" href="styles/settings.css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
@@ -155,7 +155,7 @@ if (isset($_SESSION["myAccountMsg"])) {
         <div class="panel-body">
           <div class="text-danger"><?php if (isset($myAccountErrMsg)) echo $myAccountErrMsg; ?></div>
           <form class="form-horizontal" role="form" method="post" action="manage_user.php?changePassword" 
-            onsubmit="validatePasswords($(this), $(this.parent().find('.text-danger')));">
+            onsubmit="return validatePasswords($(this), $(this.parent().find('.text-danger')));">
             <div class="form-group">
               <label class="col-md-4 control-label" for="currentPassword" > Current Password</label>
               <div class="col-md-6">
