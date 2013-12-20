@@ -194,9 +194,12 @@ function toggleFolderState($elm) {
 
 // Load a page of entries from DB for active feed
 function loadEntries() {
-	var $entryList = $("#entryList");
-
+	var isActiveEntryValid = true;
+    var $entryList = $("#entryList");
+    
 	var feedId = (activeFeedIndex != -1)? myFeeds[activeFeedIndex].id : 0;	
+ 
+    if (($activeEntry != null) && ($activeEntry.attr("id") == "more")) isActiveEntryValid = false;
 	//Remove section with id = more from entryList
 	$("div.panel[id='more']").remove();
 	if ($activeEntry == null) { //if this is the first page, get unread count
@@ -254,17 +257,22 @@ function loadEntries() {
 			$entryList.append("<div class='panel panel-default' id='more'><div class='panel-body'><p class='text-center'> Scroll down to view more entries</p> </div></div>");
 
 		}
+        if (!isActiveEntryValid) makeFirstEntryActive();
 		if ($activeEntry == null) {
 			// This is the first page
-			if (initialPageState == null) $activeEntry = $("#entryList div.panel").first();
+			if (initialPageState == null) makeFirstEntryActive();
 			else {
-				$activeEntry = $("#" + initialPageState.activeEntryId);
-				// scroll to active Entry
-				var activeEntry = document.getElementById(initialPageState.activeEntryId);
-				activeEntry.scrollIntoView(true);
+				var $entry = $("#" + initialPageState.activeEntryId);
+                if ($entry.length && !$entry.hasClass("hidden")) {
+    				// scroll to active Entry
+                    $activeEntry = $entry;
+	    			var activeEntry = document.getElementById(initialPageState.activeEntryId);
+		    		activeEntry.scrollIntoView(true);
+                }else 
+                    makeFirstEntryActive();
 			}
 			$activeEntry.addClass("highlighted");
-			// Initialize entry stated
+			// Initialize entry state
 			pageState.activeEntryId = $activeEntry.attr("id");
 			pageState.numEntriesLoaded = entries.length;
 		}else {
@@ -283,11 +291,12 @@ function setActiveEntry() {
 		//Check if current entry is still on top of the viewPort
 		// If active entry has been scrolled up, replace it with next entry
 		if ($activeEntry.position().top < 0) {
-			var $nextEntry = $activeEntry;
-			do {// loook for a valid next entry
-				$nextEntry = $nextEntry.next("div.panel");
-			}while ($nextEntry.length && $nextEntry.hasClass("hidden"));
-			if ($nextEntry.length) { 
+            var $nextEntry = $activeEntry;
+			if ($nextEntry.attr("id") == "more") loadEntries();
+            else {
+              //loook for a valid next entry
+			  $nextEntry = $nextEntry.next("div.panel:visible");
+			  if ($nextEntry.length) { 
 				if ($nextEntry.attr("id") == "more") {
 					// Load new entries if we've reached the bottom of scroll area
 					loadEntries();
@@ -307,11 +316,11 @@ function setActiveEntry() {
 					window.history.replaceState(pageState, "");
 				}
 			}
+          }
 		}else { 
 			var $prevEntry = $activeEntry;
-			do {// loook for a valid prev entry
-				$prevEntry = $prevEntry.prev("div.panel");
-			}while ($prevEntry.length && $prevEntry.hasClass("hidden"));
+			//look for a valid prev entry
+			$prevEntry = $prevEntry.prev("div.panel:visible");
 			// If previous entry's top is visible scroll up to previous entry
 			if ($prevEntry.length && $prevEntry.position().top > 0) {
 				// if it has been scrolled down, replace with prev entry
@@ -419,10 +428,23 @@ function filterView() {
 		if (filter == "unread") $("#entryList input[value='new']").parent().parent().parent().removeClass("hidden");
 		$("#entryList #more").removeClass("hidden");
 		$("#entryList #last").removeClass("hidden");
-	}
-
+    }
+   	// set first visible entry to be activea
+    makeFirstEntryActive();
+	
 }
 
+// Set first visible entry as active entry
+function makeFirstEntryActive() {
+    var $nextEntry = $("#entryList div.panel:visible").first();
+    if ($activeEntry != null) $activeEntry.toggleClass("highlighted"); 
+    $activeEntry = $nextEntry;
+   	$activeEntry.toggleClass("highlighted");
+    pageState.activeEntryId = $activeEntry.attr("id");
+   	var activeEntry = document.getElementById(pageState.activeEntryId);
+	activeEntry.scrollIntoView(true);
+ 	window.history.replaceState(pageState, "");
+}
 
 // Called when new folder dialog is submitted
 function createFolder($dialog) {

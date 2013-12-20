@@ -23,7 +23,7 @@ if (isset($_REQUEST["token"])) {
 <head>
     <title> Reset Password </title>
 <link rel="stylesheet" href="styles/user.css" >
-<script src="js/jquery.js"></script>
+<script src="//code.jquery.com/jquery.js"></script>
 <script src="js/common.js" > </script>
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
@@ -35,7 +35,7 @@ if (isset($_REQUEST["token"])) {
 		echo "<p>".$msg."</p><a href='login.php'>Proceed to login</a>";
 	}else { ?>
 		<div class="errMsg"><?php if (isset($errMsg)) echo $errMsg; ?></div>
-		<form method="post" action="manage_user.php?resetPassword" onsubmit="validatePasswords($(this));" >
+		<form method="post" action="manage_user.php?resetPassword" onsubmit="return validatePasswords($(this));" >
 		<?php echo "<input type='hidden' name='token' value='".$_GET["token"]."' />"; ?>
 		Password: <input type="password" name="password" required /><br />
 		Confirm Password: <input type="password" name="confirmPassword" required /><br />

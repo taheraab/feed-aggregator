@@ -41,7 +41,11 @@
    padding-right: 0;
 }
 
-#more, #last {
+#more {
+    height: 70em;
+}
+
+#last {
     height: 40em;
 }
 

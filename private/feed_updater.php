@@ -5,7 +5,8 @@ declare (ticks = 1);
 include_once dirname(__FILE__)."/../classes/FeedParser.php";
 include_once dirname(__FILE__)."/../classes/FeedManager.php";
 
-$pidFile = "../files/pid";
+$pidFile = dirname(__FILE__)."/../files/pid";
+$logFile = dirname(__FILE__)."/../log/feed_updater_log";
 
 $pid = pcntl_fork();
 if ($pid == -1) {
@@ -21,7 +22,7 @@ if ($pid == -1) {
 	fclose(STDERR);
 
 	$stdin = fopen("/dev/null", "r");
-	$stdout = fopen("log/feed_updater_log", "w");
+	$stdout = fopen($logFile, "w");
 	$stderr = $stdout;
 
 // In child, detach from parent

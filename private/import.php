@@ -5,7 +5,7 @@ include_once dirname(__FILE__)."/../classes/FeedParser.php";
 include_once dirname(__FILE__)."/../classes/FolderManager.php";
 
 $userId = $argv[1];
-$filename = "files/import_subscriptions".$userId;
+$filename = dirname(__FILE__)."/../files/import_subscriptions".$userId;
 
 $opmlReader = new OPMLReader();
 $feedUrls = $opmlReader->parseFile($filename);

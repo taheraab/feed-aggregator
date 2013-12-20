@@ -66,7 +66,7 @@ if (isset($_FILES["subscriptionsFile"])) {
 		color: rgb(255, 0, 0);
 	}
 </style>
-<script src="js/jquery.js"></script>
+<script src="//code.jquery.com/jquery.js"></script>
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 <script type="text/javascript">

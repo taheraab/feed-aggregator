@@ -65,7 +65,7 @@ if (isset($_REQUEST["login"])) {
 	if ($user = $userManager->userExists($emailId)) { // check only confirmed users
 	    //Send reset password request
 		if ($userManager->sendResetPasswordLink($user)) 
-			$msg = "Sent passord reset link to given email Id. Complete reset process from link given in email.";
+			$msg = "Sent password reset link to given email Id. Complete reset process from link given in email.";
 		else $errMsg = "Error sending reset password request, please try again";
 	}else $errMsg = "Error sending reset password request, please try again";
 	if (isset($errMsg)) {
