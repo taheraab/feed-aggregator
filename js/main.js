@@ -291,11 +291,13 @@ function setActiveEntry() {
 		//Check if current entry is still on top of the viewPort
 		// If active entry has been scrolled up, replace it with next entry
 		if ($activeEntry.position().top < 0) {
-            var $nextEntry = $activeEntry;
-			if ($nextEntry.attr("id") == "more") loadEntries();
+			if ($activeEntry.attr("id") == "more") loadEntries();
             else {
               //loook for a valid next entry
-			  $nextEntry = $nextEntry.next("div.panel:visible");
+              var $nextEntry = $activeEntry;
+              do {
+			  $nextEntry = $nextEntry.next("div.panel");
+               } while ($nextEntry.length && $nextEntry.hasClass("hidden"));
 			  if ($nextEntry.length) { 
 				if ($nextEntry.attr("id") == "more") {
 					// Load new entries if we've reached the bottom of scroll area
@@ -318,9 +320,11 @@ function setActiveEntry() {
 			}
           }
 		}else { 
-			var $prevEntry = $activeEntry;
 			//look for a valid prev entry
-			$prevEntry = $prevEntry.prev("div.panel:visible");
+			var $prevEntry = $activeEntry;
+            do {
+              $prevEntry = $prevEntry.prev("div.panel");
+            }while ($prevEntry.length && $prevEntry.hasClass("hidden"));
 			// If previous entry's top is visible scroll up to previous entry
 			if ($prevEntry.length && $prevEntry.position().top > 0) {
 				// if it has been scrolled down, replace with prev entry
