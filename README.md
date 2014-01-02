@@ -23,7 +23,7 @@ External Libraries:
 * Twitter Bootstrap
 * Google Fonts 
 
-*Deployment*
+*Deployment:*
 * Clone feed-aggregator repository into your webserver's document root
 * Extract PHPMailer and HTMLPurifier libraries into "includes" folder and create soft links "htmlpurifier" and "PHPMailer" to their respective directories.
 * Create a database user (e.g. FeedAggrUser) and grant him all permissions to a database (e.g. FeedAggrDB).  
