@@ -10,7 +10,7 @@ The idea for this project was born out of the demise of Google Reader. Since I w
 * Export your subscriptions into an OPML file.
 
 **Installation**  
-*Requirements:*
+*Requirements:*  
 You need the following software to run the code in the feed-aggregator repository.
 * Webserver. I used Apache 2.2.22 on Ubuntu.
 * PHP 5.4 (with modules xmlreader, xmlwriter, posix)  
