@@ -1,4 +1,4 @@
-**Welcome to Feed Reader**
+**Welcome to Feed Reader**  
 The idea for this project was born out of the demise of Google Reader. Since I was a regular user of Google Reader, I thought this was a perfect opportunity to develop a Google Reader clone and in the process learn the fundamentals of developing a web application.
 
 *Features:*
@@ -9,7 +9,7 @@ The idea for this project was born out of the demise of Google Reader. Since I w
 * Organize subscriptions/feeds into folders.
 * Export your subscriptions into an OPML file.
 
-**Installation**
+**Installation**  
 *Requirements:*
 You need the following software to run the code in the feed-aggregator repository.
 * Webserver. I used Apache 2.2.22 on Ubuntu.

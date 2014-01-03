@@ -21,7 +21,7 @@ if (isset($_SESSION["currentUserId"])) {
 	<title> Login to Feed Reader </title>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Vast+Shadow' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Oleo+Script+Swash+Caps' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="styles/common.css" >
     <script src="//code.jquery.com/jquery.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
