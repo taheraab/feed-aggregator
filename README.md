@@ -10,7 +10,7 @@ The idea for this project was born out of the demise of Google Reader. Since I w
 * Export your subscriptions into an OPML file.
 
 **Installation**  
-*Requirements:*
+*Requirements:*  
 You need the following software to run the code in the feed-aggregator repository.
 * Webserver. I used Apache 2.2.22 on Ubuntu.
 * PHP 5.4 (with modules xmlreader, xmlwriter, posix)  
@@ -23,7 +23,7 @@ External Libraries:
 * Twitter Bootstrap
 * Google Fonts 
 
-*Deployment*
+*Deployment:*
 * Clone feed-aggregator repository into your webserver's document root
 * Extract PHPMailer and HTMLPurifier libraries into "includes" folder and create soft links "htmlpurifier" and "PHPMailer" to their respective directories.
 * Create a database user (e.g. FeedAggrUser) and grant him all permissions to a database (e.g. FeedAggrDB).  
